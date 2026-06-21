@@ -3,12 +3,12 @@ extends Node
 @onready var game_loop: Node = $GameLoop
 @onready var year_label: Label = $UI/EarthView/HUD/YearLabel
 @onready var compression_label: Label = $UI/EarthView/HUD/CompressionLabel
-@onready var milestone_ladder: PanelContainer = $UI/EarthView/RightPanel/MilestoneLadder
-@onready var dashboard: PanelContainer = $UI/EarthView/RightPanel/Dashboard
-@onready var budget_panel: PanelContainer = $UI/EarthView/RightPanel/BudgetPanel
-@onready var gsa_panel: PanelContainer = $UI/EarthView/RightPanel/GsaPanel
-@onready var faction_panel: PanelContainer = $UI/EarthView/RightPanel/FactionPanel
-@onready var moon_mission_panel: MoonMissionPanel = $UI/EarthView/RightPanel/MoonMissionPanel
+@onready var milestone_ladder: PanelContainer = $UI/EarthView/RightScroll/RightPanel/MilestoneLadder
+@onready var dashboard: PanelContainer = $UI/EarthView/RightScroll/RightPanel/Dashboard
+@onready var budget_panel: PanelContainer = $UI/EarthView/RightScroll/RightPanel/BudgetPanel
+@onready var gsa_panel: PanelContainer = $UI/EarthView/RightScroll/RightPanel/GsaPanel
+@onready var faction_panel: PanelContainer = $UI/EarthView/RightScroll/RightPanel/FactionPanel
+@onready var moon_mission_panel: MoonMissionPanel = $UI/EarthView/RightScroll/RightPanel/MoonMissionPanel
 @onready var event_log: Control = $UI/EarthView/EventLog
 @onready var event_log_btn: Button = $UI/EarthView/HUD/HUDButtons/EventLogBtn
 @onready var tech_tree_panel: Control = $UI/TechTreePanel
@@ -60,8 +60,8 @@ func _ready() -> void:
 	tech_tree_panel.research_requested.connect(_on_research_requested)
 	tech_tree_panel.get_node("VBox/Header/CloseBtn").pressed.connect(func(): tech_tree_panel.hide())
 
-	# Set initial active button (SLOW = 1x is default in GameLoop)
-	_update_active_button(Constants.CompressionLevel.SLOW)
+	# Game starts paused so player can orient before time runs
+	_update_active_button(Constants.CompressionLevel.PAUSED)
 
 	# Wire budget panel -> action queue
 	budget_panel.allocation_changed.connect(_on_allocation_changed)

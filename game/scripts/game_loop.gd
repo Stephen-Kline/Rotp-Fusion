@@ -3,7 +3,7 @@ extends Node
 
 signal tick_processed(state: SimulationState)
 
-var compression: int = Constants.CompressionLevel.SLOW
+var compression: int = Constants.CompressionLevel.PAUSED
 var state: SimulationState
 var _governor: Governor
 var _accumulator: float = 0.0  # fractional years accumulated

@@ -1,5 +1,6 @@
-[gd_scene load_steps=13 format=3 uid="uid://main"]
+[gd_scene load_steps=14 format=3 uid="uid://main"]
 
+[ext_resource type="Script" path="res://scenes/earth_placeholder.gd" id="earth"]
 [ext_resource type="Script" path="res://scenes/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/game_loop.gd" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/dashboard.tscn" id="3"]
@@ -40,9 +41,8 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Earth" type="ColorRect" parent="UI/EarthView/EarthContainer"]
-custom_minimum_size = Vector2(500, 500)
-color = Color(0.1, 0.3, 0.7, 1)
+[node name="Earth" type="Control" parent="UI/EarthView/EarthContainer"]
+script = ExtResource("earth")
 
 [node name="HUD" type="VBoxContainer" parent="UI/EarthView"]
 layout_mode = 1
@@ -62,28 +62,28 @@ theme_override_font_sizes/font_size = 16
 [node name="CompressionControls" type="HBoxContainer" parent="UI/EarthView/HUD"]
 
 [node name="PauseBtn" type="Button" parent="UI/EarthView/HUD/CompressionControls"]
-text = "||"
-toggle_mode = true
-
-[node name="Btn1x" type="Button" parent="UI/EarthView/HUD/CompressionControls"]
-text = "1x"
+text = "|| Pause"
 toggle_mode = true
 button_pressed = true
 
+[node name="Btn1x" type="Button" parent="UI/EarthView/HUD/CompressionControls"]
+text = "0.2x"
+toggle_mode = true
+
 [node name="Btn5x" type="Button" parent="UI/EarthView/HUD/CompressionControls"]
-text = "5x"
+text = "1x"
 toggle_mode = true
 
 [node name="Btn20x" type="Button" parent="UI/EarthView/HUD/CompressionControls"]
-text = "20x"
+text = "5x"
 toggle_mode = true
 
 [node name="Btn100x" type="Button" parent="UI/EarthView/HUD/CompressionControls"]
-text = "100x"
+text = "20x"
 toggle_mode = true
 
 [node name="Btn500x" type="Button" parent="UI/EarthView/HUD/CompressionControls"]
-text = "500x"
+text = "100x"
 toggle_mode = true
 
 [node name="HUDButtons" type="HBoxContainer" parent="UI/EarthView/HUD"]
@@ -96,35 +96,41 @@ theme_override_font_sizes/font_size = 14
 text = "Tech Tree"
 theme_override_font_sizes/font_size = 14
 
-[node name="RightPanel" type="VBoxContainer" parent="UI/EarthView"]
+[node name="RightScroll" type="ScrollContainer" parent="UI/EarthView"]
 layout_mode = 1
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -320.0
+offset_left = -330.0
+horizontal_scroll_mode = 0
+
+[node name="RightPanel" type="VBoxContainer" parent="UI/EarthView/RightScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(310, 0)
 theme_override_constants/separation = 8
 
-[node name="MilestoneLadder" parent="UI/EarthView/RightPanel" instance=ExtResource("9")]
+[node name="MilestoneLadder" parent="UI/EarthView/RightScroll/RightPanel" instance=ExtResource("9")]
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="Dashboard" parent="UI/EarthView/RightPanel" instance=ExtResource("3")]
+[node name="Dashboard" parent="UI/EarthView/RightScroll/RightPanel" instance=ExtResource("3")]
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="BudgetPanel" parent="UI/EarthView/RightPanel" instance=ExtResource("4")]
+[node name="BudgetPanel" parent="UI/EarthView/RightScroll/RightPanel" instance=ExtResource("4")]
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="GsaPanel" parent="UI/EarthView/RightPanel" instance=ExtResource("10")]
+[node name="GsaPanel" parent="UI/EarthView/RightScroll/RightPanel" instance=ExtResource("10")]
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="FactionPanel" parent="UI/EarthView/RightPanel" instance=ExtResource("8")]
+[node name="FactionPanel" parent="UI/EarthView/RightScroll/RightPanel" instance=ExtResource("8")]
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="MoonMissionPanel" parent="UI/EarthView/RightPanel" instance=ExtResource("11")]
+[node name="MoonMissionPanel" parent="UI/EarthView/RightScroll/RightPanel" instance=ExtResource("11")]
 layout_mode = 2
 size_flags_vertical = 0
 
