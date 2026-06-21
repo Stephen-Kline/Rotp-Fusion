@@ -1,6 +1,6 @@
 extends PanelContainer
 
-# Six vital signs dashboard — reads SimulationState only, never writes.
+# Vital signs dashboard — reads SimulationState only, never writes.
 
 @onready var _energy_label: Label = $MarginContainer/VBox/EnergyRow/Value
 @onready var _population_label: Label = $MarginContainer/VBox/PopulationRow/Value
@@ -9,6 +9,7 @@ extends PanelContainer
 @onready var _military_label: Label = $MarginContainer/VBox/MilitaryRow/Value
 @onready var _frontier_label: Label = $MarginContainer/VBox/FrontierRow/Value
 @onready var _energy_warning: Label = $MarginContainer/VBox/EnergyWarning
+@onready var _gsa_label: Label = $MarginContainer/VBox/GsaRow/Value
 
 
 func refresh(state: SimulationState) -> void:
@@ -26,3 +27,14 @@ func refresh(state: SimulationState) -> void:
 		_energy_label.modulate = Color(1.0, 0.4, 0.4)
 	else:
 		_energy_label.modulate = Color(1.0, 1.0, 1.0)
+
+	# GSA status indicator
+	if state.milestone_flags.get("gsa_founded", false):
+		_gsa_label.text = "Founded ✓"
+		_gsa_label.modulate = Color(0.2, 0.9, 0.2)
+	elif state.milestone_flags.get("faction_threshold_met", false):
+		_gsa_label.text = "Eligible"
+		_gsa_label.modulate = Color(1.0, 0.9, 0.1)
+	else:
+		_gsa_label.text = "Not Founded"
+		_gsa_label.modulate = Color(0.6, 0.6, 0.6)

@@ -5,6 +5,7 @@ extends Node
 @onready var compression_label: Label = $UI/EarthView/HUD/CompressionLabel
 @onready var dashboard: PanelContainer = $UI/EarthView/RightPanel/Dashboard
 @onready var budget_panel: PanelContainer = $UI/EarthView/RightPanel/BudgetPanel
+@onready var gsa_panel: PanelContainer = $UI/EarthView/RightPanel/GsaPanel
 @onready var faction_panel: PanelContainer = $UI/EarthView/RightPanel/FactionPanel
 @onready var event_log: Control = $UI/EarthView/EventLog
 @onready var event_log_btn: Button = $UI/EarthView/HUD/HUDButtons/EventLogBtn
@@ -64,9 +65,13 @@ func _ready() -> void:
 	# Wire faction panel -> action queue
 	faction_panel.spend_capital_requested.connect(_on_spend_capital)
 
+	# Wire GSA panel -> action queue
+	gsa_panel.gsa_establish_requested.connect(_on_gsa_establish)
+
 	# Prime the dashboard with the initial state
 	dashboard.refresh(game_loop.state)
 	budget_panel.refresh(game_loop.state)
+	gsa_panel.refresh(game_loop.state)
 	faction_panel.refresh(game_loop.state)
 
 
@@ -74,6 +79,7 @@ func _on_tick(state: SimulationState) -> void:
 	year_label.text = "Year: %d" % state.year
 	dashboard.refresh(state)
 	budget_panel.refresh(state)
+	gsa_panel.refresh(state)
 	faction_panel.refresh(state)
 	if tech_tree_panel.visible:
 		tech_tree_panel.refresh(state)
@@ -120,3 +126,7 @@ func _on_event_log_toggled() -> void:
 
 func _on_research_requested(node_id: String) -> void:
 	game_loop.queue_action(PlayerAction.set_active_research(node_id))
+
+
+func _on_gsa_establish() -> void:
+	game_loop.queue_action(PlayerAction.set_active_research("global_space_agency"))
