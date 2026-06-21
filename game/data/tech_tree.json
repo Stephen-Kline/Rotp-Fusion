@@ -1,0 +1,145 @@
+[
+  {
+    "id": "suborbital_flight",
+    "display_name": "Suborbital Flight",
+    "category": "Propulsion",
+    "prerequisites": [],
+    "research_cost": 3.0,
+    "unlock_payload": { "milestones": ["suborbital_flight"], "build_options": ["launch_facility"] },
+    "kardashev_tier": 1,
+    "description": "First steps beyond the atmosphere. Rockets capable of reaching space but not achieving orbit."
+  },
+  {
+    "id": "orbital_satellite",
+    "display_name": "Orbital Satellite",
+    "category": "Propulsion",
+    "prerequisites": ["suborbital_flight"],
+    "research_cost": 5.0,
+    "unlock_payload": { "milestones": ["orbital_satellite"], "build_options": ["satellite"] },
+    "kardashev_tier": 1,
+    "description": "Sustained Earth orbit achieved. Opens the door to communications and reconnaissance satellites."
+  },
+  {
+    "id": "crewed_orbit",
+    "display_name": "Crewed Orbit",
+    "category": "Propulsion",
+    "prerequisites": ["orbital_satellite"],
+    "research_cost": 8.0,
+    "unlock_payload": { "milestones": ["crewed_orbit"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "Humans in orbit for the first time. A defining moment for the civilization."
+  },
+  {
+    "id": "long_duration_crewed",
+    "display_name": "Long-Duration Crewed Mission",
+    "category": "Propulsion",
+    "prerequisites": ["crewed_orbit"],
+    "research_cost": 10.0,
+    "unlock_payload": { "milestones": ["long_duration_crewed"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "Weeks in orbit. Understanding of long-duration spaceflight physiology and operations."
+  },
+  {
+    "id": "modular_station",
+    "display_name": "Modular Space Station",
+    "category": "Propulsion",
+    "prerequisites": ["long_duration_crewed"],
+    "research_cost": 15.0,
+    "unlock_payload": { "milestones": ["modular_station"], "build_options": ["modular_station"] },
+    "kardashev_tier": 1,
+    "description": "A permanent crewed outpost in LEO. The foundation for all further expansion."
+  },
+  {
+    "id": "expanded_station",
+    "display_name": "Expanded Space Station",
+    "category": "Propulsion",
+    "prerequisites": ["modular_station"],
+    "research_cost": 20.0,
+    "unlock_payload": { "milestones": ["expanded_station"], "build_options": ["expanded_station"] },
+    "kardashev_tier": 1,
+    "description": "A large multi-module station enabling continuous scientific work and industrial capacity in orbit."
+  },
+  {
+    "id": "lunar_transit",
+    "display_name": "Lunar Transit",
+    "category": "Propulsion",
+    "prerequisites": ["expanded_station"],
+    "required_milestones": ["gsa_founded"],
+    "research_cost": 25.0,
+    "unlock_payload": { "milestones": ["lunar_transit"], "build_options": ["lunar_probe", "lunar_transit_vehicle"] },
+    "kardashev_tier": 1,
+    "description": "Propulsion and navigation systems capable of reaching the Moon. Requires Global Space Agency coordination."
+  },
+  {
+    "id": "crewed_lunar_vehicle",
+    "display_name": "Crewed Lunar Vehicle",
+    "category": "Propulsion",
+    "prerequisites": ["lunar_transit"],
+    "required_milestones": ["lunar_probe_complete"],
+    "research_cost": 30.0,
+    "unlock_payload": { "milestones": ["crewed_lunar_vehicle"], "build_options": ["crewed_lunar_lander"] },
+    "kardashev_tier": 1,
+    "description": "A vessel capable of landing humans on the Moon and returning them safely. Requires probe survey data."
+  },
+  {
+    "id": "advanced_fission",
+    "display_name": "Advanced Fission",
+    "category": "Energy",
+    "prerequisites": [],
+    "research_cost": 12.0,
+    "unlock_payload": { "milestones": [], "build_options": [], "stat_modifiers": {"energy_bonus": 0.2} },
+    "kardashev_tier": 1,
+    "description": "Next-generation nuclear fission reactors providing reliable high-output energy."
+  },
+  {
+    "id": "early_solar",
+    "display_name": "Early Solar Power",
+    "category": "Energy",
+    "prerequisites": [],
+    "research_cost": 8.0,
+    "unlock_payload": { "milestones": [], "build_options": [], "stat_modifiers": {"energy_bonus": 0.1} },
+    "kardashev_tier": 1,
+    "description": "Photovoltaic arrays at utility scale, supplementing conventional energy production."
+  },
+  {
+    "id": "global_space_agency",
+    "display_name": "Global Space Agency",
+    "category": "Governance",
+    "prerequisites": ["expanded_station"],
+    "required_milestones": ["faction_threshold_met"],
+    "research_cost": 0.0,
+    "unlock_payload": { "milestones": ["gsa_founded"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.3} },
+    "kardashev_tier": 1,
+    "description": "A unified global body coordinating all space activity. Requires broad political consensus."
+  },
+  {
+    "id": "hubble_equivalent",
+    "display_name": "Space Telescope",
+    "category": "Science",
+    "prerequisites": ["orbital_satellite"],
+    "research_cost": 10.0,
+    "unlock_payload": { "milestones": ["space_telescope"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.1} },
+    "kardashev_tier": 1,
+    "description": "A large orbital telescope enabling deep-space observation and scientific discovery."
+  },
+  {
+    "id": "seti_array",
+    "display_name": "SETI Array",
+    "category": "Science",
+    "prerequisites": ["hubble_equivalent"],
+    "research_cost": 15.0,
+    "unlock_payload": { "milestones": ["seti_array"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "A coordinated array of radio telescopes scanning for signs of extraterrestrial intelligence."
+  },
+  {
+    "id": "lunar_probe",
+    "display_name": "Lunar Probe",
+    "category": "Probes",
+    "prerequisites": ["lunar_transit"],
+    "research_cost": 20.0,
+    "unlock_payload": { "milestones": ["lunar_probe_complete"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "An unmanned survey vessel sent to the Moon. Returns habitability and resource data, including water ice confirmation."
+  }
+]

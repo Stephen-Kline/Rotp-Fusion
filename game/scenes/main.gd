@@ -7,6 +7,8 @@ extends Node
 @onready var budget_panel: PanelContainer = $UI/EarthView/RightPanel/BudgetPanel
 @onready var event_log: Control = $UI/EarthView/EventLog
 @onready var event_log_btn: Button = $UI/EarthView/HUD/HUDButtons/EventLogBtn
+@onready var tech_tree_panel: Control = $UI/TechTreePanel
+@onready var tech_tree_btn: Button = $UI/EarthView/HUD/HUDButtons/TechTreeBtn
 
 var _compression_buttons: Array[Button] = []
 var _compression_levels: Array[int] = []
@@ -47,6 +49,11 @@ func _ready() -> void:
 	# Event log toggle
 	event_log_btn.pressed.connect(_on_event_log_toggled)
 
+	# Tech tree toggle and research action wiring
+	tech_tree_btn.pressed.connect(func(): tech_tree_panel.toggle())
+	tech_tree_panel.research_requested.connect(_on_research_requested)
+	tech_tree_panel.get_node("VBox/Header/CloseBtn").pressed.connect(func(): tech_tree_panel.hide())
+
 	# Set initial active button (SLOW = 1x is default in GameLoop)
 	_update_active_button(Constants.CompressionLevel.SLOW)
 
@@ -62,6 +69,8 @@ func _on_tick(state: SimulationState) -> void:
 	year_label.text = "Year: %d" % state.year
 	dashboard.refresh(state)
 	budget_panel.refresh(state)
+	if tech_tree_panel.visible:
+		tech_tree_panel.refresh(state)
 
 
 func _on_allocation_changed(food: float, education: float, industry: float, energy: float) -> void:
@@ -96,3 +105,7 @@ func _on_event_log_toggled() -> void:
 		event_log.hide()
 	else:
 		event_log.show()
+
+
+func _on_research_requested(node_id: String) -> void:
+	game_loop.queue_action(PlayerAction.set_active_research(node_id))

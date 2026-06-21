@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://main"]
+[gd_scene load_steps=8 format=3 uid="uid://main"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/game_loop.gd" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/budget_panel.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/notification_panel.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/event_log.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/tech_tree_panel.tscn" id="7"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1")
@@ -86,6 +87,10 @@ toggle_mode = true
 text = "Event Log"
 theme_override_font_sizes/font_size = 14
 
+[node name="TechTreeBtn" type="Button" parent="UI/EarthView/HUD/HUDButtons"]
+text = "Tech Tree"
+theme_override_font_sizes/font_size = 14
+
 [node name="RightPanel" type="VBoxContainer" parent="UI/EarthView"]
 layout_mode = 1
 anchor_left = 1.0
@@ -125,3 +130,6 @@ offset_left = -620.0
 offset_top = 20.0
 offset_right = -20.0
 offset_bottom = 520.0
+
+[node name="TechTreePanel" parent="UI" instance=ExtResource("7")]
+layout_mode = 1

@@ -31,9 +31,20 @@ var completed_research: Array[String] = []
 var active_research: String = ""
 var research_progress: float = 0.0  # in education-output-years
 
-# Milestone flags
-var milestone_moon_landing: bool = false
-var milestone_gsa_founded: bool = false
+# Milestone flags (unified dict replaces individual booleans)
+var milestone_flags: Dictionary = {}
+
+# Convenience accessors for common flags
+var milestone_moon_landing: bool:
+	get: return milestone_flags.get("moon_landing", false)
+var milestone_gsa_founded: bool:
+	get: return milestone_flags.get("gsa_founded", false)
+
+# Unlocked build options (from tech tree payloads)
+var available_build_options: Array[String] = []
+
+# Research rate bonus from tech unlocks (additive multiplier)
+var research_rate_bonus: float = 0.0
 
 # Founding principles (list of string tags)
 var founding_principles: Array[String] = []
@@ -56,7 +67,8 @@ func duplicate_state() -> SimulationState:
 	s.completed_research = completed_research.duplicate()
 	s.active_research = active_research
 	s.research_progress = research_progress
-	s.milestone_moon_landing = milestone_moon_landing
-	s.milestone_gsa_founded = milestone_gsa_founded
+	s.milestone_flags = milestone_flags.duplicate()
+	s.available_build_options = available_build_options.duplicate()
+	s.research_rate_bonus = research_rate_bonus
 	s.founding_principles = founding_principles.duplicate()
 	return s
