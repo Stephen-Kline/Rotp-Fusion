@@ -1,0 +1,15 @@
+# Godot editor and cache files — do not commit
+.godot/editor/
+.godot/imported/
+.godot/mono/
+.godot/global_script_class_cache.cfg
+.godot/scene_groups_cache.cfg
+.godot/uid_cache.bin
+
+# Export artifacts
+*.translation
+export/
+
+# OS
+.DS_Store
+Thumbs.db
