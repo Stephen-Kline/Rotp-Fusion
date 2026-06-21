@@ -5,6 +5,7 @@ class_name PlayerAction
 
 enum Type {
 	SET_PILLAR_ALLOCATION,
+	SPEND_POLITICAL_CAPITAL,
 }
 
 var type: int
@@ -23,4 +24,11 @@ static func set_pillar_allocation(
 	return PlayerAction.new(
 		Type.SET_PILLAR_ALLOCATION,
 		{"food": food, "education": education, "industry": industry, "energy": energy}
+	)
+
+
+static func spend_political_capital(faction_id: String, amount: float) -> PlayerAction:
+	return PlayerAction.new(
+		Type.SPEND_POLITICAL_CAPITAL,
+		{"faction_id": faction_id, "amount": amount}
 	)

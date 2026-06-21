@@ -17,7 +17,11 @@ var population_units: float = 30.0     # abstracted population
 var research_rate: float = 0.0         # education-output-years per game-year
 var construction_speed: float = 1.0    # industry multiplier
 
-# Faction satisfaction aggregate (0–100); detailed faction data added in Slice 4
+# Faction data (Slice 4)
+var factions: Array = []               # Array[Faction]
+var political_capital: float = 0.0    # accumulated political capital, capped at 500
+
+# Faction satisfaction aggregate (0–100); average of all faction satisfactions
 var faction_satisfaction: float = 50.0
 
 # Military readiness (placeholder)
@@ -39,6 +43,21 @@ var milestone_gsa_founded: bool = false
 var founding_principles: Array[String] = []
 
 
+func _init() -> void:
+	_init_factions()
+
+
+func _init_factions() -> void:
+	factions = [
+		Faction.new("militarist",     "Military-Industrial", "militarist",     "industry",  45.0, 0.20),
+		Faction.new("expansionist",   "Expansionist",        "expansionist",   "industry",  55.0, 0.18),
+		Faction.new("technocrat",     "Technocrats",         "technocrat",     "education", 50.0, 0.22),
+		Faction.new("cooperativist",  "Cooperativists",      "cooperativist",  "food",      60.0, 0.15),
+		Faction.new("traditionalist", "Traditionalists",     "traditionalist", "food",      65.0, 0.12),
+		Faction.new("isolationist",   "Isolationists",       "isolationist",   "energy",    40.0, 0.13),
+	]
+
+
 func duplicate_state() -> SimulationState:
 	var s := SimulationState.new()
 	s.year = year
@@ -50,6 +69,11 @@ func duplicate_state() -> SimulationState:
 	s.population_units = population_units
 	s.research_rate = research_rate
 	s.construction_speed = construction_speed
+	# Deep-copy factions
+	s.factions = []
+	for f in factions:
+		s.factions.append(f.duplicate())
+	s.political_capital = political_capital
 	s.faction_satisfaction = faction_satisfaction
 	s.military_readiness = military_readiness
 	s.expansion_frontier = expansion_frontier

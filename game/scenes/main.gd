@@ -5,6 +5,7 @@ extends Node
 @onready var compression_label: Label = $UI/EarthView/HUD/CompressionLabel
 @onready var dashboard: PanelContainer = $UI/EarthView/RightPanel/Dashboard
 @onready var budget_panel: PanelContainer = $UI/EarthView/RightPanel/BudgetPanel
+@onready var faction_panel: PanelContainer = $UI/EarthView/RightPanel/FactionPanel
 @onready var event_log: Control = $UI/EarthView/EventLog
 @onready var event_log_btn: Button = $UI/EarthView/HUD/HUDButtons/EventLogBtn
 
@@ -53,19 +54,29 @@ func _ready() -> void:
 	# Wire budget panel -> action queue
 	budget_panel.allocation_changed.connect(_on_allocation_changed)
 
+	# Wire faction panel -> action queue
+	faction_panel.spend_capital_requested.connect(_on_spend_capital)
+
 	# Prime the dashboard with the initial state
 	dashboard.refresh(game_loop.state)
 	budget_panel.refresh(game_loop.state)
+	faction_panel.refresh(game_loop.state)
 
 
 func _on_tick(state: SimulationState) -> void:
 	year_label.text = "Year: %d" % state.year
 	dashboard.refresh(state)
 	budget_panel.refresh(state)
+	faction_panel.refresh(state)
 
 
 func _on_allocation_changed(food: float, education: float, industry: float, energy: float) -> void:
 	var action := PlayerAction.set_pillar_allocation(food, education, industry, energy)
+	game_loop.queue_action(action)
+
+
+func _on_spend_capital(faction_id: String, amount: float) -> void:
+	var action := PlayerAction.spend_political_capital(faction_id, amount)
 	game_loop.queue_action(action)
 
 
