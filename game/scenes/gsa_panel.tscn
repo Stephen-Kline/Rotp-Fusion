@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=3 uid="uid://ce_gsa_panel_v1"]
+
+[ext_resource type="Script" path="res://scenes/gsa_panel.gd" id="1"]
+
+[node name="GsaPanel" type="PanelContainer"]
+script = ExtResource("1")
+custom_minimum_size = Vector2(320, 0)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="MarginContainer/VBox"]
+text = "GLOBAL SPACE AGENCY"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.8, 0.9, 1.0, 1.0)
+
+[node name="Separator" type="HSeparator" parent="MarginContainer/VBox"]
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBox"]
+text = "Not Founded"
+theme_override_font_sizes/font_size = 13
+
+[node name="FactionProgressLabel" type="Label" parent="MarginContainer/VBox"]
+text = "Factions supporting: 0 / 3 needed"
+theme_override_font_sizes/font_size = 12
+
+[node name="EstablishBtn" type="Button" parent="MarginContainer/VBox"]
+text = "Establish GSA"
+theme_override_font_sizes/font_size = 13
+
+[node name="BonusLabel" type="Label" parent="MarginContainer/VBox"]
+text = "Research rate bonus: +30%"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.2, 0.9, 0.2, 1.0)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://main"]
+[gd_scene load_steps=11 format=3 uid="uid://main"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/game_loop.gd" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/tech_tree_panel.tscn" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/faction_panel.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/milestone_ladder.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/gsa_panel.tscn" id="10"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1")
@@ -110,6 +111,10 @@ layout_mode = 2
 size_flags_vertical = 0
 
 [node name="BudgetPanel" parent="UI/EarthView/RightPanel" instance=ExtResource("4")]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="GsaPanel" parent="UI/EarthView/RightPanel" instance=ExtResource("10")]
 layout_mode = 2
 size_flags_vertical = 0
 
