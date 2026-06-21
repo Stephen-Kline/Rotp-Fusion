@@ -6,14 +6,17 @@ extends Node
 @onready var dashboard: PanelContainer = $UI/EarthView/RightPanel/Dashboard
 @onready var budget_panel: PanelContainer = $UI/EarthView/RightPanel/BudgetPanel
 @onready var faction_panel: PanelContainer = $UI/EarthView/RightPanel/FactionPanel
+@onready var moon_mission_panel: MoonMissionPanel = $UI/EarthView/RightPanel/MoonMissionPanel
 @onready var event_log: Control = $UI/EarthView/EventLog
 @onready var event_log_btn: Button = $UI/EarthView/HUD/HUDButtons/EventLogBtn
 @onready var tech_tree_panel: Control = $UI/TechTreePanel
 @onready var tech_tree_btn: Button = $UI/EarthView/HUD/HUDButtons/TechTreeBtn
+@onready var victory_overlay: Control = $UI/VictoryOverlay
 
 var _compression_buttons: Array[Button] = []
 var _compression_levels: Array[int] = []
 var _pre_pause_compression: int = Constants.CompressionLevel.SLOW
+var _milestone1_shown: bool = false
 
 
 func _ready() -> void:
@@ -64,10 +67,14 @@ func _ready() -> void:
 	# Wire faction panel -> action queue
 	faction_panel.spend_capital_requested.connect(_on_spend_capital)
 
+	# Wire moon mission panel
+	moon_mission_panel.mission_launch_requested.connect(_on_moon_mission_launch)
+
 	# Prime the dashboard with the initial state
 	dashboard.refresh(game_loop.state)
 	budget_panel.refresh(game_loop.state)
 	faction_panel.refresh(game_loop.state)
+	moon_mission_panel.refresh(game_loop.state)
 
 
 func _on_tick(state: SimulationState) -> void:
@@ -75,8 +82,12 @@ func _on_tick(state: SimulationState) -> void:
 	dashboard.refresh(state)
 	budget_panel.refresh(state)
 	faction_panel.refresh(state)
+	moon_mission_panel.refresh(state)
 	if tech_tree_panel.visible:
 		tech_tree_panel.refresh(state)
+	if not _milestone1_shown and state.milestone_flags.get("moon_landing", false):
+		_milestone1_shown = true
+		victory_overlay.show_victory(state.year)
 
 
 func _on_allocation_changed(food: float, education: float, industry: float, energy: float) -> void:
@@ -87,6 +98,10 @@ func _on_allocation_changed(food: float, education: float, industry: float, ener
 func _on_spend_capital(faction_id: String, amount: float) -> void:
 	var action := PlayerAction.spend_political_capital(faction_id, amount)
 	game_loop.queue_action(action)
+
+
+func _on_moon_mission_launch() -> void:
+	game_loop.queue_action(PlayerAction.launch_moon_mission())
 
 
 func _set_compression(level: int) -> void:

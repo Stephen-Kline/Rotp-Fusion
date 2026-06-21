@@ -1,0 +1,63 @@
+[gd_scene load_steps=2 format=3 uid="uid://moon_mission_panel"]
+
+[ext_resource type="Script" path="res://scenes/moon_mission_panel.gd" id="1"]
+
+[node name="MoonMissionPanel" type="PanelContainer"]
+script = ExtResource("1")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TitleLabel" type="Label" parent="VBox"]
+text = "Moon Landing Mission"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+
+[node name="PrereqLabel" type="Label" parent="VBox"]
+text = "Moon landing requires: Crewed Lunar Vehicle + Lunar Probe data + GSA"
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+
+[node name="VehicleCheck" type="RichTextLabel" parent="VBox"]
+fit_content = true
+use_bbcode = true
+text = "[color=gray]☐ Crewed Lunar Vehicle researched[/color]"
+theme_override_font_sizes/normal_font_size = 11
+
+[node name="ProbeCheck" type="RichTextLabel" parent="VBox"]
+fit_content = true
+use_bbcode = true
+text = "[color=gray]☐ Lunar Probe data received[/color]"
+theme_override_font_sizes/normal_font_size = 11
+
+[node name="GsaCheck" type="RichTextLabel" parent="VBox"]
+fit_content = true
+use_bbcode = true
+text = "[color=gray]☐ GSA Founded[/color]"
+theme_override_font_sizes/normal_font_size = 11
+
+[node name="LaunchBtn" type="Button" parent="VBox"]
+visible = false
+text = "LAUNCH MOON MISSION"
+theme_override_colors/font_color = Color(1, 0.85, 0, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="ProgressBar" type="ProgressBar" parent="VBox"]
+visible = false
+custom_minimum_size = Vector2(0, 20)
+max_value = 1.0
+value = 0.0
+
+[node name="ProgressLabel" type="Label" parent="VBox"]
+visible = false
+text = "Mission in progress — Year 0 of 0"
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.4, 0.6, 1, 1)
+
+[node name="CompleteLabel" type="Label" parent="VBox"]
+visible = false
+text = "Humanity has reached the Moon. ✓ Milestone 1 Complete"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.3, 0.9, 0.3, 1)
+autowrap_mode = 3

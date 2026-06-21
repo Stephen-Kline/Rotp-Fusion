@@ -7,6 +7,7 @@ enum Type {
 	SET_PILLAR_ALLOCATION,
 	SET_ACTIVE_RESEARCH,
 	SPEND_POLITICAL_CAPITAL,
+	LAUNCH_MOON_MISSION,
 }
 
 var type: int
@@ -37,3 +38,7 @@ static func spend_political_capital(faction_id: String, amount: float) -> Player
 		Type.SPEND_POLITICAL_CAPITAL,
 		{"faction_id": faction_id, "amount": amount}
 	)
+
+
+static func launch_moon_mission() -> PlayerAction:
+	return PlayerAction.new(Type.LAUNCH_MOON_MISSION, {})
