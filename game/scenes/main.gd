@@ -3,6 +3,7 @@ extends Node
 @onready var game_loop: Node = $GameLoop
 @onready var year_label: Label = $UI/EarthView/HUD/YearLabel
 @onready var compression_label: Label = $UI/EarthView/HUD/CompressionLabel
+@onready var milestone_ladder: PanelContainer = $UI/EarthView/RightPanel/MilestoneLadder
 @onready var dashboard: PanelContainer = $UI/EarthView/RightPanel/Dashboard
 @onready var budget_panel: PanelContainer = $UI/EarthView/RightPanel/BudgetPanel
 @onready var faction_panel: PanelContainer = $UI/EarthView/RightPanel/FactionPanel
@@ -65,6 +66,7 @@ func _ready() -> void:
 	faction_panel.spend_capital_requested.connect(_on_spend_capital)
 
 	# Prime the dashboard with the initial state
+	milestone_ladder.refresh(game_loop.state)
 	dashboard.refresh(game_loop.state)
 	budget_panel.refresh(game_loop.state)
 	faction_panel.refresh(game_loop.state)
@@ -72,6 +74,7 @@ func _ready() -> void:
 
 func _on_tick(state: SimulationState) -> void:
 	year_label.text = "Year: %d" % state.year
+	milestone_ladder.refresh(state)
 	dashboard.refresh(state)
 	budget_panel.refresh(state)
 	faction_panel.refresh(state)

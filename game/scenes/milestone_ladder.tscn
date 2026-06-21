@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3 uid="uid://ce_milestone_ladder_v1"]
+
+[ext_resource type="Script" path="res://scenes/milestone_ladder.gd" id="1"]
+
+[node name="MilestoneLadder" type="PanelContainer"]
+script = ExtResource("1")
+custom_minimum_size = Vector2(280, 0)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="MarginContainer/VBox"]
+text = "LEO Progress"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.8, 0.9, 1.0, 1.0)
+
+[node name="Separator0" type="HSeparator" parent="MarginContainer/VBox"]
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Row0" type="Label" parent="MarginContainer/VBox/Rows"]
+layout_mode = 2
+text = "☐ Suborbital Flight"
+theme_override_font_sizes/font_size = 12
+
+[node name="Row1" type="Label" parent="MarginContainer/VBox/Rows"]
+layout_mode = 2
+text = "☐ Orbital Satellite"
+theme_override_font_sizes/font_size = 12
+
+[node name="Row2" type="Label" parent="MarginContainer/VBox/Rows"]
+layout_mode = 2
+text = "☐ Crewed Orbit"
+theme_override_font_sizes/font_size = 12
+
+[node name="Row3" type="Label" parent="MarginContainer/VBox/Rows"]
+layout_mode = 2
+text = "☐ Long-Duration Crewed"
+theme_override_font_sizes/font_size = 12
+
+[node name="Row4" type="Label" parent="MarginContainer/VBox/Rows"]
+layout_mode = 2
+text = "☐ Modular Space Station"
+theme_override_font_sizes/font_size = 12
+
+[node name="Row5" type="Label" parent="MarginContainer/VBox/Rows"]
+layout_mode = 2
+text = "☐ Expanded Space Station"
+theme_override_font_sizes/font_size = 12

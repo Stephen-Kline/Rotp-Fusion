@@ -79,6 +79,7 @@ func tick(state: SimulationState, delta_years: float) -> TickResult:
 	_compute_construction_speed(next)
 	_compute_population(next, delta_years)
 	_tick_research(next, delta_years, result)
+	_check_leo_milestones(next, result)
 	_compute_factions(next, delta_years, result)
 
 	return result
@@ -124,6 +125,31 @@ func _tick_research(s: SimulationState, delta_years: float, result: TickResult) 
 			"Research complete: %s" % node.display_name,
 			EventSystem.Priority.HIGH
 		)
+
+
+const LEO_LADDER := [
+	{"id": "suborbital_flight",    "message": "Humanity reaches space for the first time."},
+	{"id": "orbital_satellite",    "message": "A satellite circles the Earth."},
+	{"id": "crewed_orbit",         "message": "A human being orbits the Earth."},
+	{"id": "long_duration_crewed", "message": "Crews live in space for weeks at a time."},
+	{"id": "modular_station",      "message": "A permanent outpost now orbits the Earth."},
+	{"id": "expanded_station",     "message": "The station grows — a true gateway to the cosmos."},
+]
+
+
+func _check_leo_milestones(s: SimulationState, result: TickResult) -> void:
+	for step in LEO_LADDER:
+		var node_id: String = step["id"]
+		var flag: String = "leo_celebrated_" + node_id
+		if node_id in s.completed_research and not s.milestone_flags.get(flag, false):
+			result.add_event(
+				"leo_milestone_" + node_id,
+				step["message"],
+				EventSystem.Priority.CRITICAL
+			)
+			# Store category on the event by patching the last appended dict
+			result.events[-1]["category"] = "LEO"
+			s.milestone_flags[flag] = true
 
 
 func _apply_unlock_payload(s: SimulationState, node: TechNode) -> void:
