@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://main"]
+[gd_scene load_steps=13 format=3 uid="uid://main"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/game_loop.gd" id="2"]
@@ -10,6 +10,8 @@
 [ext_resource type="PackedScene" path="res://scenes/faction_panel.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/milestone_ladder.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://scenes/gsa_panel.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/moon_mission_panel.tscn" id="11"]
+[ext_resource type="PackedScene" path="res://scenes/victory_overlay.tscn" id="12"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1")
@@ -122,6 +124,10 @@ size_flags_vertical = 0
 layout_mode = 2
 size_flags_vertical = 0
 
+[node name="MoonMissionPanel" parent="UI/EarthView/RightPanel" instance=ExtResource("11")]
+layout_mode = 2
+size_flags_vertical = 0
+
 [node name="NotificationPanel" parent="UI/EarthView" instance=ExtResource("5")]
 layout_mode = 1
 anchors_preset = 8
@@ -147,4 +153,7 @@ offset_right = -20.0
 offset_bottom = 520.0
 
 [node name="TechTreePanel" parent="UI" instance=ExtResource("7")]
+layout_mode = 1
+
+[node name="VictoryOverlay" parent="UI" instance=ExtResource("12")]
 layout_mode = 1

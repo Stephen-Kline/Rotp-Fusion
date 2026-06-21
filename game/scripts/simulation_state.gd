@@ -53,6 +53,11 @@ var research_rate_bonus: float = 0.0
 # Founding principles (list of string tags)
 var founding_principles: Array[String] = []
 
+# Moon mission state
+var moon_mission_active: bool = false
+var moon_mission_progress: float = 0.0   # years elapsed
+var moon_mission_duration: float = 0.0   # total years needed (set at launch)
+
 
 func _init() -> void:
 	_init_factions()
@@ -95,4 +100,7 @@ func duplicate_state() -> SimulationState:
 	s.available_build_options = available_build_options.duplicate()
 	s.research_rate_bonus = research_rate_bonus
 	s.founding_principles = founding_principles.duplicate()
+	s.moon_mission_active = moon_mission_active
+	s.moon_mission_progress = moon_mission_progress
+	s.moon_mission_duration = moon_mission_duration
 	return s

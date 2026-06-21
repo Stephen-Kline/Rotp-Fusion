@@ -10,18 +10,19 @@ var _tech_db: TechTreeDB
 
 class TickResult:
 	var state: SimulationState
-	var events: Array[Dictionary]  # [{id, message, priority, year}]
+	var events: Array[Dictionary]  # [{id, message, priority, year, category}]
 
 	func _init(s: SimulationState) -> void:
 		state = s
 		events = []
 
-	func add_event(id: String, message: String, priority: int) -> void:
+	func add_event(id: String, message: String, priority: int, category: String = "") -> void:
 		events.append({
 			"id": id,
 			"message": message,
 			"priority": priority,
 			"year": state.year,
+			"category": category,
 		})
 
 
@@ -66,6 +67,18 @@ func _apply_action(s: SimulationState, action: PlayerAction) -> void:
 						f._cur_satisfaction = clampf(f.satisfaction + amount / 10.0, 0.0, 100.0)
 						f.satisfaction = f._cur_satisfaction
 					break
+		PlayerAction.Type.LAUNCH_MOON_MISSION:
+			var prereqs_met: bool = (
+				"crewed_lunar_vehicle" in s.completed_research
+				and s.milestone_flags.get("lunar_probe_complete", false)
+				and not s.moon_mission_active
+				and not s.milestone_flags.get("moon_landing", false)
+			)
+			if prereqs_met:
+				s.moon_mission_active = true
+				s.moon_mission_progress = 0.0
+				var duration := 2.0 / maxf(s.construction_speed, 0.001)
+				s.moon_mission_duration = clampf(duration, 0.5, 9999.0)
 
 
 func tick(state: SimulationState, delta_years: float) -> TickResult:
@@ -80,6 +93,7 @@ func tick(state: SimulationState, delta_years: float) -> TickResult:
 	_compute_population(next, delta_years)
 	_tick_research(next, delta_years, result)
 	_check_leo_milestones(next, result)
+	_tick_moon_mission(next, delta_years, result)
 	_compute_factions(next, delta_years, result)
 	_check_gsa_preconditions(next, result)
 
@@ -143,14 +157,17 @@ func _check_leo_milestones(s: SimulationState, result: TickResult) -> void:
 		var node_id: String = step["id"]
 		var flag: String = "leo_celebrated_" + node_id
 		if node_id in s.completed_research and not s.milestone_flags.get(flag, false):
-			result.add_event(
-				"leo_milestone_" + node_id,
-				step["message"],
-				EventSystem.Priority.CRITICAL
-			)
-			# Store category on the event by patching the last appended dict
-			result.events[-1]["category"] = "LEO"
+			result.add_event("leo_milestone_" + node_id, step["message"], EventSystem.Priority.CRITICAL, "LEO")
 			s.milestone_flags[flag] = true
+
+
+func _tick_moon_mission(s: SimulationState, delta_years: float, result: TickResult) -> void:
+	if s.moon_mission_active and not s.milestone_flags.get("moon_landing", false):
+		s.moon_mission_progress += delta_years
+		if s.moon_mission_progress >= s.moon_mission_duration:
+			s.moon_mission_active = false
+			s.milestone_flags["moon_landing"] = true
+			result.add_event("moon_landing", "Humanity has landed on the Moon. A new era begins.", EventSystem.Priority.CRITICAL, "MILESTONE")
 
 
 func _apply_unlock_payload(s: SimulationState, node: TechNode) -> void:
