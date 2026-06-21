@@ -53,6 +53,19 @@ func _apply_action(s: SimulationState, action: PlayerAction) -> void:
 			if _tech_db.is_available(node_id, s.completed_research, s.milestone_flags):
 				s.active_research = node_id
 				s.research_progress = 0.0
+		PlayerAction.Type.SPEND_POLITICAL_CAPITAL:
+			var p := action.payload
+			var faction_id: String = p.get("faction_id", "")
+			var amount: float = float(p.get("amount", 0.0))
+			for f: Faction in s.factions:
+				if f.id == faction_id:
+					var cost: float = 20.0 * (1.0 + (100.0 - f.satisfaction) / 100.0)
+					if s.political_capital >= cost:
+						s.political_capital -= cost
+						f._prev_satisfaction = f._cur_satisfaction
+						f._cur_satisfaction = clampf(f.satisfaction + amount / 10.0, 0.0, 100.0)
+						f.satisfaction = f._cur_satisfaction
+					break
 
 
 func tick(state: SimulationState, delta_years: float) -> TickResult:
@@ -66,19 +79,19 @@ func tick(state: SimulationState, delta_years: float) -> TickResult:
 	_compute_construction_speed(next)
 	_compute_population(next, delta_years)
 	_tick_research(next, delta_years, result)
+	_compute_factions(next, delta_years, result)
 
 	return result
 
 
 func _compute_energy(s: SimulationState) -> void:
-	# Energy capacity scales with pillar allocation; normalized 0–1
 	s.energy_capacity = clamp(s.pillar_energy / 50.0, 0.0, 1.0)
 
 
 func _compute_research_rate(s: SimulationState) -> void:
 	var base := s.pillar_education / 100.0
 	var energy_multiplier := 1.0 if s.energy_capacity >= ENERGY_LOW_THRESHOLD else 0.5
-	s.research_rate = base * energy_multiplier * 10.0  # in education-output-years per game-year
+	s.research_rate = base * energy_multiplier * 10.0
 
 
 func _compute_construction_speed(s: SimulationState) -> void:
@@ -88,8 +101,8 @@ func _compute_construction_speed(s: SimulationState) -> void:
 
 
 func _compute_population(s: SimulationState, delta_years: float) -> void:
-	var food_factor := s.pillar_food / 25.0  # 25% is baseline
-	var growth_rate := 0.01 * food_factor    # 1% per year at baseline
+	var food_factor := s.pillar_food / 25.0
+	var growth_rate := 0.01 * food_factor
 	s.population_units += s.population_units * growth_rate * delta_years
 
 
@@ -122,7 +135,57 @@ func _apply_unlock_payload(s: SimulationState, node: TechNode) -> void:
 			s.available_build_options.append(build_option)
 	var modifiers: Dictionary = payload.get("stat_modifiers", {})
 	if modifiers.has("energy_bonus"):
-		# Bonus is applied next compute cycle via modified capacity ceiling
 		s.milestone_flags["energy_bonus_" + node.id] = true
 	if modifiers.has("research_rate_bonus"):
 		s.research_rate_bonus += float(modifiers["research_rate_bonus"])
+
+
+func _compute_factions(s: SimulationState, delta_years: float, result: TickResult) -> void:
+	const CRISIS_THRESHOLD := 20.0
+	const CRISIS_YEARS := 3
+
+	var pillar_map: Dictionary = {
+		"food": s.pillar_food,
+		"education": s.pillar_education,
+		"industry": s.pillar_industry,
+		"energy": s.pillar_energy,
+	}
+
+	var capital_accrual: float = 0.0
+
+	for f: Faction in s.factions:
+		var alloc: float = pillar_map.get(f.preferred_pillar, 0.0)
+
+		f._prev_satisfaction = f._cur_satisfaction
+		var sat_delta: float = 0.0
+		if alloc >= 30.0:
+			sat_delta = 2.0 * delta_years
+		elif alloc < 20.0:
+			sat_delta = -3.0 * delta_years
+		f._cur_satisfaction = clampf(f.satisfaction + sat_delta, 0.0, 100.0)
+		f.satisfaction = f._cur_satisfaction
+
+		if f.satisfaction < CRISIS_THRESHOLD:
+			f.dissatisfied_years += int(delta_years)
+		else:
+			f.dissatisfied_years = 0
+
+		if f.dissatisfied_years >= CRISIS_YEARS:
+			result.add_event(
+				"faction_crisis_" + f.id,
+				"Faction crisis: %s is on the verge of revolt." % f.display_name,
+				EventSystem.Priority.HIGH
+			)
+
+		capital_accrual += f.satisfaction * f.weight
+
+	s.political_capital = clampf(
+		s.political_capital + (capital_accrual / 100.0) * delta_years,
+		0.0,
+		500.0
+	)
+
+	var total: float = 0.0
+	for f: Faction in s.factions:
+		total += f.satisfaction
+	s.faction_satisfaction = total / float(s.factions.size()) if s.factions.size() > 0 else 50.0

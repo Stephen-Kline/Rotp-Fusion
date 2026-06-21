@@ -33,4 +33,7 @@ static func set_active_research(node_id: String) -> PlayerAction:
 
 
 static func spend_political_capital(faction_id: String, amount: float) -> PlayerAction:
-	return PlayerAction.new(Type.SPEND_POLITICAL_CAPITAL, {"faction_id": faction_id, "amount": amount})
+	return PlayerAction.new(
+		Type.SPEND_POLITICAL_CAPITAL,
+		{"faction_id": faction_id, "amount": amount}
+	)

@@ -1,0 +1,76 @@
+[gd_scene load_steps=2 format=3 uid="uid://ce_faction_panel_v1"]
+
+[ext_resource type="Script" path="res://scenes/faction_panel.gd" id="1"]
+
+[node name="FactionPanel" type="PanelContainer"]
+script = ExtResource("1")
+custom_minimum_size = Vector2(320, 0)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="MarginContainer/VBox"]
+text = "FACTIONS"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.8, 0.9, 1.0, 1.0)
+
+[node name="Separator0" type="HSeparator" parent="MarginContainer/VBox"]
+
+[node name="CapitalRow" type="HBoxContainer" parent="MarginContainer/VBox"]
+
+[node name="Label" type="Label" parent="MarginContainer/VBox/CapitalRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Political Capital"
+theme_override_font_sizes/font_size = 13
+
+[node name="Value" type="Label" parent="MarginContainer/VBox/CapitalRow"]
+layout_mode = 2
+text = "0.0 / 500"
+theme_override_font_sizes/font_size = 13
+
+[node name="Separator1" type="HSeparator" parent="MarginContainer/VBox"]
+
+[node name="FactionList" type="VBoxContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SpendPanel" type="PanelContainer" parent="MarginContainer/VBox"]
+layout_mode = 2
+visible = false
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/VBox/SpendPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="FactionName" type="Label" parent="MarginContainer/VBox/SpendPanel/VBox"]
+layout_mode = 2
+text = "Faction"
+theme_override_font_sizes/font_size = 13
+
+[node name="Amounts" type="HBoxContainer" parent="MarginContainer/VBox/SpendPanel/VBox"]
+layout_mode = 2
+
+[node name="Btn10" type="Button" parent="MarginContainer/VBox/SpendPanel/VBox/Amounts"]
+layout_mode = 2
+text = "Spend 10"
+
+[node name="Btn20" type="Button" parent="MarginContainer/VBox/SpendPanel/VBox/Amounts"]
+layout_mode = 2
+text = "Spend 20"
+
+[node name="Btn50" type="Button" parent="MarginContainer/VBox/SpendPanel/VBox/Amounts"]
+layout_mode = 2
+text = "Spend 50"
+
+[node name="CancelBtn" type="Button" parent="MarginContainer/VBox/SpendPanel/VBox"]
+layout_mode = 2
+text = "Cancel"
