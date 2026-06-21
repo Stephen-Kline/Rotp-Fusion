@@ -3,6 +3,8 @@ extends Node
 @onready var game_loop: Node = $GameLoop
 @onready var year_label: Label = $UI/EarthView/HUD/YearLabel
 @onready var compression_label: Label = $UI/EarthView/HUD/CompressionLabel
+@onready var dashboard: PanelContainer = $UI/EarthView/RightPanel/Dashboard
+@onready var budget_panel: PanelContainer = $UI/EarthView/RightPanel/BudgetPanel
 
 
 func _ready() -> void:
@@ -22,9 +24,23 @@ func _ready() -> void:
 	$UI/EarthView/HUD/CompressionControls/Btn500x.pressed.connect(
 		func(): _set_compression(Constants.CompressionLevel.MAX))
 
+	# Wire budget panel -> action queue
+	budget_panel.allocation_changed.connect(_on_allocation_changed)
+
+	# Prime the dashboard with the initial state
+	dashboard.refresh(game_loop.state)
+	budget_panel.refresh(game_loop.state)
+
 
 func _on_tick(state: SimulationState) -> void:
 	year_label.text = "Year: %d" % state.year
+	dashboard.refresh(state)
+	budget_panel.refresh(state)
+
+
+func _on_allocation_changed(food: float, education: float, industry: float, energy: float) -> void:
+	var action := PlayerAction.set_pillar_allocation(food, education, industry, energy)
+	game_loop.queue_action(action)
 
 
 func _set_compression(level: int) -> void:

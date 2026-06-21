@@ -1,0 +1,113 @@
+[gd_scene load_steps=2 format=3 uid="uid://ce_budget_panel_v2"]
+
+[ext_resource type="Script" path="res://scenes/budget_panel.gd" id="1"]
+
+[node name="BudgetPanel" type="PanelContainer"]
+script = ExtResource("1")
+custom_minimum_size = Vector2(320, 0)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="MarginContainer/VBox"]
+text = "BUDGET ALLOCATION"
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.8, 0.9, 1.0, 1.0)
+
+[node name="Separator0" type="HSeparator" parent="MarginContainer/VBox"]
+
+[node name="FoodRow" type="VBoxContainer" parent="MarginContainer/VBox"]
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/VBox/FoodRow"]
+
+[node name="Name" type="Label" parent="MarginContainer/VBox/FoodRow/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Food"
+theme_override_font_sizes/font_size = 13
+
+[node name="Pct" type="Label" parent="MarginContainer/VBox/FoodRow/Header"]
+layout_mode = 2
+text = "25%"
+theme_override_font_sizes/font_size = 13
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBox/FoodRow"]
+layout_mode = 2
+min_value = 0.0
+max_value = 100.0
+step = 1.0
+value = 25.0
+
+[node name="EducationRow" type="VBoxContainer" parent="MarginContainer/VBox"]
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/VBox/EducationRow"]
+
+[node name="Name" type="Label" parent="MarginContainer/VBox/EducationRow/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Education"
+theme_override_font_sizes/font_size = 13
+
+[node name="Pct" type="Label" parent="MarginContainer/VBox/EducationRow/Header"]
+layout_mode = 2
+text = "25%"
+theme_override_font_sizes/font_size = 13
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBox/EducationRow"]
+layout_mode = 2
+min_value = 0.0
+max_value = 100.0
+step = 1.0
+value = 25.0
+
+[node name="IndustryRow" type="VBoxContainer" parent="MarginContainer/VBox"]
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/VBox/IndustryRow"]
+
+[node name="Name" type="Label" parent="MarginContainer/VBox/IndustryRow/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Industry"
+theme_override_font_sizes/font_size = 13
+
+[node name="Pct" type="Label" parent="MarginContainer/VBox/IndustryRow/Header"]
+layout_mode = 2
+text = "25%"
+theme_override_font_sizes/font_size = 13
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBox/IndustryRow"]
+layout_mode = 2
+min_value = 0.0
+max_value = 100.0
+step = 1.0
+value = 25.0
+
+[node name="EnergyRow" type="VBoxContainer" parent="MarginContainer/VBox"]
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/VBox/EnergyRow"]
+
+[node name="Name" type="Label" parent="MarginContainer/VBox/EnergyRow/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Energy"
+theme_override_font_sizes/font_size = 13
+
+[node name="Pct" type="Label" parent="MarginContainer/VBox/EnergyRow/Header"]
+layout_mode = 2
+text = "25%"
+theme_override_font_sizes/font_size = 13
+
+[node name="Slider" type="HSlider" parent="MarginContainer/VBox/EnergyRow"]
+layout_mode = 2
+min_value = 0.0
+max_value = 100.0
+step = 1.0
+value = 25.0

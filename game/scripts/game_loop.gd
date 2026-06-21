@@ -7,6 +7,7 @@ var compression: int = Constants.CompressionLevel.SLOW
 var state: SimulationState
 var _governor: Governor
 var _accumulator: float = 0.0  # fractional years accumulated
+var _pending_actions: Array = []  # Array[PlayerAction]
 
 
 func _ready() -> void:
@@ -14,9 +15,18 @@ func _ready() -> void:
 	_governor = Governor.new()
 
 
+func queue_action(action: PlayerAction) -> void:
+	_pending_actions.append(action)
+
+
 func _process(delta: float) -> void:
 	var years_per_second: float = Constants.YEARS_PER_SECOND[compression]
 	if years_per_second == 0.0:
+		# Still apply pending actions immediately so UI reflects changes even when paused
+		if not _pending_actions.is_empty():
+			state = _governor.apply_actions(state, _pending_actions)
+			_pending_actions.clear()
+			tick_processed.emit(state)
 		return
 
 	_accumulator += delta * years_per_second
@@ -27,6 +37,11 @@ func _process(delta: float) -> void:
 
 
 func _run_tick(delta_years: float) -> void:
+	# Apply player actions before computing the tick
+	if not _pending_actions.is_empty():
+		state = _governor.apply_actions(state, _pending_actions)
+		_pending_actions.clear()
+
 	var result := _governor.tick(state, delta_years)
 	state = result.state
 

@@ -23,6 +23,27 @@ class TickResult:
 		})
 
 
+# Process a batch of player actions against state, returning the updated state.
+# Called before tick() so the tick sees current player intent.
+func apply_actions(state: SimulationState, actions: Array) -> SimulationState:
+	if actions.is_empty():
+		return state
+	var next := state.duplicate_state()
+	for action in actions:
+		_apply_action(next, action)
+	return next
+
+
+func _apply_action(s: SimulationState, action: PlayerAction) -> void:
+	match action.type:
+		PlayerAction.Type.SET_PILLAR_ALLOCATION:
+			var p := action.payload
+			s.pillar_food = float(p.get("food", s.pillar_food))
+			s.pillar_education = float(p.get("education", s.pillar_education))
+			s.pillar_industry = float(p.get("industry", s.pillar_industry))
+			s.pillar_energy = float(p.get("energy", s.pillar_energy))
+
+
 func tick(state: SimulationState, delta_years: float) -> TickResult:
 	var next := state.duplicate_state()
 	var result := TickResult.new(next)
