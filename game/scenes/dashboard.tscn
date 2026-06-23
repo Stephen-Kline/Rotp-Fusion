@@ -10,113 +10,66 @@ custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_bottom = 8
 
 [node name="VBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 5
 
 [node name="Title" type="Label" parent="MarginContainer/VBox"]
-text = "VITAL SIGNS"
-theme_override_font_sizes/font_size = 14
+text = "STATUS"
+theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.8, 0.9, 1.0, 1.0)
 
-[node name="Separator0" type="HSeparator" parent="MarginContainer/VBox"]
+[node name="Sep" type="HSeparator" parent="MarginContainer/VBox"]
 
-[node name="EnergyRow" type="HBoxContainer" parent="MarginContainer/VBox"]
+[node name="PowerRow" type="HBoxContainer" parent="MarginContainer/VBox"]
 
-[node name="Name" type="Label" parent="MarginContainer/VBox/EnergyRow"]
-layout_mode = 2
+[node name="Name" type="Label" parent="MarginContainer/VBox/PowerRow"]
 size_flags_horizontal = 3
-text = "Energy Capacity"
+text = "Power"
 theme_override_font_sizes/font_size = 13
 
-[node name="Value" type="Label" parent="MarginContainer/VBox/EnergyRow"]
-layout_mode = 2
+[node name="Value" type="Label" parent="MarginContainer/VBox/PowerRow"]
 text = "--"
 theme_override_font_sizes/font_size = 13
 
-[node name="EnergyWarning" type="Label" parent="MarginContainer/VBox"]
-text = "  LOW ENERGY — research & construction debuffed"
+[node name="PowerWarning" type="Label" parent="MarginContainer/VBox"]
+text = "  ⚠ Low power — research & construction halved"
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(1.0, 0.4, 0.4, 1.0)
 visible = false
 
-[node name="PopulationRow" type="HBoxContainer" parent="MarginContainer/VBox"]
+[node name="PopRow" type="HBoxContainer" parent="MarginContainer/VBox"]
 
-[node name="Name" type="Label" parent="MarginContainer/VBox/PopulationRow"]
-layout_mode = 2
+[node name="Name" type="Label" parent="MarginContainer/VBox/PopRow"]
 size_flags_horizontal = 3
 text = "Population"
 theme_override_font_sizes/font_size = 13
 
-[node name="Value" type="Label" parent="MarginContainer/VBox/PopulationRow"]
-layout_mode = 2
+[node name="Value" type="Label" parent="MarginContainer/VBox/PopRow"]
 text = "--"
 theme_override_font_sizes/font_size = 13
 
 [node name="ResearchRow" type="HBoxContainer" parent="MarginContainer/VBox"]
 
 [node name="Name" type="Label" parent="MarginContainer/VBox/ResearchRow"]
-layout_mode = 2
 size_flags_horizontal = 3
-text = "Research Rate"
+text = "Research"
 theme_override_font_sizes/font_size = 13
 
 [node name="Value" type="Label" parent="MarginContainer/VBox/ResearchRow"]
-layout_mode = 2
 text = "--"
 theme_override_font_sizes/font_size = 13
 
-[node name="SatisfactionRow" type="HBoxContainer" parent="MarginContainer/VBox"]
+[node name="BuildRow" type="HBoxContainer" parent="MarginContainer/VBox"]
 
-[node name="Name" type="Label" parent="MarginContainer/VBox/SatisfactionRow"]
-layout_mode = 2
+[node name="Name" type="Label" parent="MarginContainer/VBox/BuildRow"]
 size_flags_horizontal = 3
-text = "Faction Satisfaction"
+text = "Build Speed"
 theme_override_font_sizes/font_size = 13
 
-[node name="Value" type="Label" parent="MarginContainer/VBox/SatisfactionRow"]
-layout_mode = 2
-text = "--"
-theme_override_font_sizes/font_size = 13
-
-[node name="MilitaryRow" type="HBoxContainer" parent="MarginContainer/VBox"]
-
-[node name="Name" type="Label" parent="MarginContainer/VBox/MilitaryRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Military Readiness"
-theme_override_font_sizes/font_size = 13
-
-[node name="Value" type="Label" parent="MarginContainer/VBox/MilitaryRow"]
-layout_mode = 2
-text = "--"
-theme_override_font_sizes/font_size = 13
-
-[node name="FrontierRow" type="HBoxContainer" parent="MarginContainer/VBox"]
-
-[node name="Name" type="Label" parent="MarginContainer/VBox/FrontierRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Expansion Frontier"
-theme_override_font_sizes/font_size = 13
-
-[node name="Value" type="Label" parent="MarginContainer/VBox/FrontierRow"]
-layout_mode = 2
-text = "--"
-theme_override_font_sizes/font_size = 13
-
-[node name="GsaRow" type="HBoxContainer" parent="MarginContainer/VBox"]
-
-[node name="Name" type="Label" parent="MarginContainer/VBox/GsaRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "GSA"
-theme_override_font_sizes/font_size = 13
-
-[node name="Value" type="Label" parent="MarginContainer/VBox/GsaRow"]
-layout_mode = 2
+[node name="Value" type="Label" parent="MarginContainer/VBox/BuildRow"]
 text = "--"
 theme_override_font_sizes/font_size = 13
