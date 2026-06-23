@@ -1,8 +1,7 @@
-[gd_scene load_steps=16 format=3 uid="uid://main"]
+[gd_scene load_steps=15 format=3 uid="uid://main"]
 
 [ext_resource type="Script" path="res://scenes/star_field.gd" id="stars"]
-[ext_resource type="Script" path="res://scenes/earth_placeholder.gd" id="earth"]
-[ext_resource type="Script" path="res://scenes/orbital_layer.gd" id="orbital"]
+[ext_resource type="Script" path="res://scenes/earth_view_3d.gd" id="earth3d"]
 [ext_resource type="Script" path="res://scenes/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/game_loop.gd" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/dashboard.tscn" id="3"]
@@ -37,17 +36,13 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("stars")
 
-[node name="EarthContainer" type="CenterContainer" parent="UI/EarthView"]
+[node name="EarthContainer" type="SubViewportContainer" parent="UI/EarthView"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-
-[node name="Earth" type="Control" parent="UI/EarthView/EarthContainer"]
-script = ExtResource("earth")
-
-[node name="OrbitalLayer" type="Control" parent="UI/EarthView/EarthContainer"]
-script = ExtResource("orbital")
+stretch = true
+script = ExtResource("earth3d")
 
 [node name="HUD" type="VBoxContainer" parent="UI/EarthView"]
 layout_mode = 1

@@ -34,6 +34,7 @@ var expansion_frontier: int = 0
 var completed_research: Array[String] = []
 var active_research: String = ""
 var research_progress: float = 0.0  # in education-output-years
+var research_queue: Array[String] = []
 
 # Milestone flags (unified dict replaces individual booleans)
 var milestone_flags: Dictionary = {}
@@ -96,6 +97,7 @@ func duplicate_state() -> SimulationState:
 	s.completed_research = completed_research.duplicate()
 	s.active_research = active_research
 	s.research_progress = research_progress
+	s.research_queue = research_queue.duplicate()
 	s.milestone_flags = milestone_flags.duplicate()
 	s.available_build_options = available_build_options.duplicate()
 	s.research_rate_bonus = research_rate_bonus

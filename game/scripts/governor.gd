@@ -51,9 +51,14 @@ func _apply_action(s: SimulationState, action: PlayerAction) -> void:
 			s.pillar_energy = float(p.get("energy", s.pillar_energy))
 		PlayerAction.Type.SET_ACTIVE_RESEARCH:
 			var node_id: String = action.payload.get("node_id", "")
-			if _tech_db.is_available(node_id, s.completed_research, s.milestone_flags):
-				s.active_research = node_id
-				s.research_progress = 0.0
+			if node_id in s.completed_research or node_id == s.active_research or node_id in s.research_queue:
+				pass  # already done or queued
+			elif _tech_db.is_available(node_id, s.completed_research, s.milestone_flags):
+				if s.active_research.is_empty():
+					s.active_research = node_id
+					s.research_progress = 0.0
+				else:
+					s.research_queue.append(node_id)
 		PlayerAction.Type.SPEND_POLITICAL_CAPITAL:
 			var p := action.payload
 			var faction_id: String = p.get("faction_id", "")
@@ -138,8 +143,14 @@ func _tick_research(s: SimulationState, delta_years: float, result: TickResult) 
 		result.add_event(
 			"research_complete_%s" % node.id,
 			"Research complete: %s" % node.display_name,
-			EventSystem.Priority.HIGH
+			EventSystem.Priority.LOW
 		)
+		# Auto-start next queued item (skip any that became unavailable or were completed)
+		while not s.research_queue.is_empty():
+			var next_id: String = s.research_queue.pop_front()
+			if next_id not in s.completed_research and _tech_db.is_available(next_id, s.completed_research, s.milestone_flags):
+				s.active_research = next_id
+				break
 
 
 const LEO_LADDER := [

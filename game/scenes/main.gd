@@ -14,8 +14,7 @@ extends Node
 @onready var tech_tree_panel: Control = $UI/TechTreePanel
 @onready var tech_tree_btn: Button = $UI/EarthView/HUD/HUDButtons/TechTreeBtn
 @onready var victory_overlay: Control = $UI/VictoryOverlay
-@onready var earth: Control = $UI/EarthView/EarthContainer/Earth
-@onready var orbital_layer: Control = $UI/EarthView/EarthContainer/OrbitalLayer
+@onready var earth_view: SubViewportContainer = $UI/EarthView/EarthContainer
 
 var _compression_buttons: Array[Button] = []
 var _compression_levels: Array[int] = []
@@ -58,7 +57,11 @@ func _ready() -> void:
 	event_log_btn.pressed.connect(_on_event_log_toggled)
 
 	# Tech tree toggle and research action wiring
-	tech_tree_btn.pressed.connect(func(): tech_tree_panel.toggle())
+	tech_tree_btn.pressed.connect(func():
+		if not tech_tree_panel.visible:
+			tech_tree_panel.refresh(game_loop.state)
+		tech_tree_panel.toggle()
+	)
 	tech_tree_panel.research_requested.connect(_on_research_requested)
 	tech_tree_panel.get_node("VBox/Header/CloseBtn").pressed.connect(func(): tech_tree_panel.hide())
 
@@ -78,20 +81,19 @@ func _ready() -> void:
 	moon_mission_panel.mission_launch_requested.connect(_on_moon_mission_launch)
 
 	# Prime the dashboard and visual layer with the initial state
-	earth.update_state(game_loop.state)
-	orbital_layer.update_state(game_loop.state)
+	earth_view.update_state(game_loop.state)
 	milestone_ladder.refresh(game_loop.state)
 	dashboard.refresh(game_loop.state)
 	budget_panel.refresh(game_loop.state)
 	gsa_panel.refresh(game_loop.state)
 	faction_panel.refresh(game_loop.state)
 	moon_mission_panel.refresh(game_loop.state)
+	tech_tree_panel.refresh(game_loop.state)
 
 
 func _on_tick(state: SimulationState) -> void:
 	year_label.text = "Year: %d" % state.year
-	earth.update_state(state)
-	orbital_layer.update_state(state)
+	earth_view.update_state(state)
 	milestone_ladder.refresh(state)
 	dashboard.refresh(state)
 	budget_panel.refresh(state)
@@ -139,6 +141,11 @@ func _update_active_button(active_level: int) -> void:
 		var btn: Button = _compression_buttons[i]
 		var is_active: bool = _compression_levels[i] == active_level
 		btn.button_pressed = is_active
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F5:
+		get_tree().reload_current_scene()
 
 
 func _on_event_log_toggled() -> void:

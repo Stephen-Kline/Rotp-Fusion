@@ -5,6 +5,7 @@ signal research_requested(node_id: String)
 const STATE_LOCKED := "locked"
 const STATE_AVAILABLE := "available"
 const STATE_ACTIVE := "active"
+const STATE_QUEUED := "queued"
 const STATE_COMPLETE := "complete"
 
 var _db: TechTreeDB
@@ -93,6 +94,9 @@ func _add_node_card(parent: VBoxContainer, node: TechNode) -> void:
 		STATE_ACTIVE:
 			cost_label.text = "In progress…"
 			card.modulate = Color(0.7, 0.9, 1.0)
+		STATE_QUEUED:
+			cost_label.text = "Queued"
+			card.modulate = Color(0.8, 0.75, 1.0)
 		STATE_AVAILABLE:
 			cost_label.text = "Cost: %.0f" % node.research_cost if node.research_cost > 0.0 else "Political"
 		STATE_LOCKED:
@@ -114,6 +118,8 @@ func _get_node_state(node: TechNode) -> String:
 		return STATE_COMPLETE
 	if _state.active_research == node.id:
 		return STATE_ACTIVE
+	if node.id in _state.research_queue:
+		return STATE_QUEUED
 	if _db.is_available(node.id, _state.completed_research, _state.milestone_flags):
 		return STATE_AVAILABLE
 	return STATE_LOCKED
