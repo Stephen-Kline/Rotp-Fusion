@@ -34,6 +34,10 @@ func get_nodes_by_category(category: String) -> Array:
 	return _by_category.get(category, [])
 
 
+func get_all_nodes() -> Array:
+	return _nodes.values()
+
+
 func get_categories() -> Array:
 	return _by_category.keys()
 
