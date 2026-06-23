@@ -14,13 +14,13 @@ const MARGIN_X  := 78.0    # left margin (space for category labels)
 const MARGIN_Y  := 18.0
 
 # Category display order and tint colors
-const CAT_ORDER := ["Energy", "Propulsion", "Science", "Governance", "Probes"]
+const CAT_ORDER := ["Energy", "Propulsion", "Infrastructure", "Exploration", "Governance"]
 const CAT_TINTS: Dictionary = {
-	"Energy":     Color(0.90, 0.75, 0.10, 0.13),
-	"Propulsion": Color(0.20, 0.50, 0.95, 0.13),
-	"Science":    Color(0.55, 0.22, 0.90, 0.13),
-	"Governance": Color(0.20, 0.80, 0.50, 0.13),
-	"Probes":     Color(0.90, 0.48, 0.10, 0.13),
+	"Energy":         Color(0.90, 0.75, 0.10, 0.13),
+	"Propulsion":     Color(0.20, 0.50, 0.95, 0.13),
+	"Infrastructure": Color(0.65, 0.40, 0.20, 0.13),
+	"Exploration":    Color(0.55, 0.22, 0.90, 0.13),
+	"Governance":     Color(0.20, 0.80, 0.50, 0.13),
 }
 
 # Node status colours
