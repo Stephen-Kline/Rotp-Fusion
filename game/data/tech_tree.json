@@ -102,17 +102,6 @@
     "description": "Photovoltaic arrays at utility scale, supplementing conventional energy production."
   },
   {
-    "id": "global_space_agency",
-    "display_name": "Global Space Agency",
-    "category": "Governance",
-    "prerequisites": ["expanded_station"],
-    "required_milestones": ["faction_threshold_met"],
-    "research_cost": 0.0,
-    "unlock_payload": { "milestones": ["gsa_founded"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.3} },
-    "kardashev_tier": 1,
-    "description": "A unified global body coordinating all space activity. Requires broad political consensus."
-  },
-  {
     "id": "space_telescope",
     "display_name": "Space Telescope",
     "category": "Exploration",

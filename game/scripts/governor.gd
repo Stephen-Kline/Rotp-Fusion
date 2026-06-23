@@ -247,23 +247,18 @@ func _compute_factions(s: SimulationState, delta_years: float, result: TickResul
 
 
 func _check_gsa_preconditions(s: SimulationState, result: TickResult) -> void:
-	# Count factions with satisfaction >= 50
+	if s.milestone_flags.get("gsa_founded", false):
+		return
+
+	# GSA auto-founds when 3+ factions satisfied AND expanded station is built
 	var satisfied_count: int = 0
 	for f: Faction in s.factions:
 		if f.satisfaction >= 50.0:
 			satisfied_count += 1
 
-	# If 3+ satisfied factions AND expanded_station researched, set faction_threshold_met
-	if not s.milestone_flags.get("gsa_founded", false):
-		if satisfied_count >= 3 and "expanded_station" in s.completed_research:
-			s.milestone_flags["faction_threshold_met"] = true
-
-	# Emit the founding CRITICAL event exactly once.
-	# gsa_founded is set by _apply_unlock_payload (in _tick_research) in the same tick the
-	# research completes. The research_rate_bonus (+0.3) is already applied by _apply_unlock_payload
-	# via stat_modifiers. We use gsa_event_fired as a one-shot guard for the event only.
-	if s.milestone_flags.get("gsa_founded", false) and not s.milestone_flags.get("gsa_event_fired", false):
-		s.milestone_flags["gsa_event_fired"] = true
+	if satisfied_count >= 3 and "expanded_station" in s.completed_research:
+		s.milestone_flags["gsa_founded"] = true
+		s.research_rate_bonus += 0.3   # same bonus previously in unlock_payload
 		result.events.append({
 			"id": "gsa_founded",
 			"message": "The Global Space Agency is founded. Humanity speaks with one voice.",
