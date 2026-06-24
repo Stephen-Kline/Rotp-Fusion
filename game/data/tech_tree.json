@@ -33,11 +33,11 @@
     "id": "long_duration_crewed",
     "display_name": "Long-Duration Crewed Mission",
     "category": "Propulsion",
-    "prerequisites": ["crewed_orbit"],
+    "prerequisites": ["crewed_orbit", "space_medicine"],
     "research_cost": 10.0,
     "unlock_payload": { "milestones": ["long_duration_crewed"], "build_options": [] },
     "kardashev_tier": 1,
-    "description": "Weeks in orbit. Understanding of long-duration spaceflight physiology and operations."
+    "description": "Weeks in orbit. Requires understanding of how the human body responds to sustained spaceflight."
   },
   {
     "id": "lunar_transit",
@@ -54,17 +54,17 @@
     "id": "crewed_lunar_vehicle",
     "display_name": "Crewed Lunar Lander",
     "category": "Propulsion",
-    "prerequisites": ["lunar_transit"],
+    "prerequisites": ["lunar_transit", "radiation_shielding"],
     "required_milestones": ["lunar_probe_complete"],
     "research_cost": 30.0,
     "unlock_payload": { "milestones": ["crewed_lunar_vehicle"], "build_options": ["crewed_lunar_lander"] },
     "kardashev_tier": 1,
-    "description": "A vessel capable of landing humans on the Moon and returning them safely. Requires probe survey data."
+    "description": "A vessel capable of landing humans on the Moon and returning them safely. Crew requires proven radiation shielding."
   },
   {
     "id": "modular_station",
     "display_name": "Modular Space Station",
-    "category": "Infrastructure",
+    "category": "Engineering",
     "prerequisites": ["long_duration_crewed"],
     "research_cost": 15.0,
     "unlock_payload": { "milestones": ["modular_station"], "build_options": ["modular_station"] },
@@ -74,22 +74,12 @@
   {
     "id": "expanded_station",
     "display_name": "Expanded Station",
-    "category": "Infrastructure",
-    "prerequisites": ["modular_station"],
+    "category": "Engineering",
+    "prerequisites": ["modular_station", "closed_loop_life_support"],
     "research_cost": 20.0,
     "unlock_payload": { "milestones": ["expanded_station"], "build_options": ["expanded_station"] },
     "kardashev_tier": 1,
-    "description": "A large multi-module station enabling continuous scientific work and industrial capacity in orbit."
-  },
-  {
-    "id": "advanced_fission",
-    "display_name": "Advanced Fission",
-    "category": "Energy",
-    "prerequisites": [],
-    "research_cost": 12.0,
-    "unlock_payload": { "milestones": [], "build_options": [], "stat_modifiers": {"energy_bonus": 0.2} },
-    "kardashev_tier": 1,
-    "description": "Next-generation nuclear fission reactors providing reliable high-output energy."
+    "description": "A large multi-module station. Requires closed-loop life support to sustain a permanent crew at scale."
   },
   {
     "id": "early_solar",
@@ -102,9 +92,69 @@
     "description": "Photovoltaic arrays at utility scale, supplementing conventional energy production."
   },
   {
+    "id": "advanced_fission",
+    "display_name": "Advanced Fission",
+    "category": "Energy",
+    "prerequisites": [],
+    "research_cost": 12.0,
+    "unlock_payload": { "milestones": [], "build_options": [], "stat_modifiers": {"energy_bonus": 0.2} },
+    "kardashev_tier": 1,
+    "description": "Next-generation nuclear fission reactors providing reliable high-output energy."
+  },
+  {
+    "id": "chemical_propellants",
+    "display_name": "Chemical Propellants",
+    "category": "Chemistry",
+    "prerequisites": [],
+    "research_cost": 6.0,
+    "unlock_payload": { "milestones": ["chemical_propellants"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "High-energy liquid and solid propellant chemistry. The foundation of rocket science."
+  },
+  {
+    "id": "advanced_materials",
+    "display_name": "Advanced Materials",
+    "category": "Chemistry",
+    "prerequisites": ["chemical_propellants"],
+    "research_cost": 11.0,
+    "unlock_payload": { "milestones": ["advanced_materials"], "build_options": [], "stat_modifiers": {"construction_speed_bonus": 0.15} },
+    "kardashev_tier": 1,
+    "description": "Lightweight alloys, heat-resistant composites, and structural polymers enabling more capable spacecraft."
+  },
+  {
+    "id": "closed_loop_life_support",
+    "display_name": "Closed-Loop Life Support",
+    "category": "Chemistry",
+    "prerequisites": ["advanced_materials", "long_duration_crewed"],
+    "research_cost": 16.0,
+    "unlock_payload": { "milestones": ["closed_loop_life_support"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "Fully recycled air and water systems. Required to sustain permanent crews in large orbital habitats."
+  },
+  {
+    "id": "space_medicine",
+    "display_name": "Space Medicine",
+    "category": "Medicine",
+    "prerequisites": ["crewed_orbit"],
+    "research_cost": 8.0,
+    "unlock_payload": { "milestones": ["space_medicine"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.05} },
+    "kardashev_tier": 1,
+    "description": "Understanding how microgravity affects the human body. Essential for missions longer than a few days."
+  },
+  {
+    "id": "radiation_shielding",
+    "display_name": "Radiation Shielding",
+    "category": "Medicine",
+    "prerequisites": ["space_medicine", "advanced_materials"],
+    "research_cost": 14.0,
+    "unlock_payload": { "milestones": ["radiation_shielding"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "Passive and active shielding systems protecting crews from cosmic rays and solar particle events."
+  },
+  {
     "id": "space_telescope",
     "display_name": "Space Telescope",
-    "category": "Exploration",
+    "category": "Science",
     "prerequisites": ["orbital_satellite"],
     "research_cost": 10.0,
     "unlock_payload": { "milestones": ["space_telescope"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.1} },
@@ -112,23 +162,33 @@
     "description": "A large orbital telescope enabling deep-space observation and scientific discovery."
   },
   {
-    "id": "seti_array",
-    "display_name": "SETI Array",
-    "category": "Exploration",
-    "prerequisites": ["space_telescope"],
-    "research_cost": 15.0,
-    "unlock_payload": { "milestones": ["seti_array"], "build_options": [] },
-    "kardashev_tier": 1,
-    "description": "A coordinated array of radio telescopes scanning for signs of extraterrestrial intelligence."
-  },
-  {
     "id": "lunar_probe",
     "display_name": "Lunar Probe",
-    "category": "Exploration",
+    "category": "Science",
     "prerequisites": ["lunar_transit"],
     "research_cost": 20.0,
     "unlock_payload": { "milestones": ["lunar_probe_complete"], "build_options": [] },
     "kardashev_tier": 1,
     "description": "An unmanned survey vessel sent to the Moon. Returns habitability and resource data, including water ice confirmation."
+  },
+  {
+    "id": "satellite_comms",
+    "display_name": "Satellite Communications",
+    "category": "Computing",
+    "prerequisites": ["orbital_satellite"],
+    "research_cost": 7.0,
+    "unlock_payload": { "milestones": ["satellite_comms"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.05} },
+    "kardashev_tier": 1,
+    "description": "Global communications backbone via orbital relay satellites. Enables real-time data sharing across the planet."
+  },
+  {
+    "id": "seti_array",
+    "display_name": "SETI Array",
+    "category": "Computing",
+    "prerequisites": ["satellite_comms", "space_telescope"],
+    "research_cost": 18.0,
+    "unlock_payload": { "milestones": ["seti_array"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "A coordinated array of radio telescopes scanning for signs of extraterrestrial intelligence."
   }
 ]

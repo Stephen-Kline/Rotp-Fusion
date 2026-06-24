@@ -51,6 +51,9 @@ var available_build_options: Array[String] = []
 # Research rate bonus from tech unlocks (additive multiplier)
 var research_rate_bonus: float = 0.0
 
+# Construction speed bonus from tech unlocks (additive multiplier)
+var construction_speed_bonus: float = 0.0
+
 # Founding principles (list of string tags)
 var founding_principles: Array[String] = []
 
@@ -101,6 +104,7 @@ func duplicate_state() -> SimulationState:
 	s.milestone_flags = milestone_flags.duplicate()
 	s.available_build_options = available_build_options.duplicate()
 	s.research_rate_bonus = research_rate_bonus
+	s.construction_speed_bonus = construction_speed_bonus
 	s.founding_principles = founding_principles.duplicate()
 	s.moon_mission_active = moon_mission_active
 	s.moon_mission_progress = moon_mission_progress

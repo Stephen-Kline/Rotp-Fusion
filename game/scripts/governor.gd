@@ -118,7 +118,7 @@ func _compute_research_rate(s: SimulationState) -> void:
 func _compute_construction_speed(s: SimulationState) -> void:
 	var base := s.pillar_industry / 100.0
 	var energy_multiplier := 1.0 if s.energy_capacity >= ENERGY_LOW_THRESHOLD else 0.5
-	s.construction_speed = base * energy_multiplier
+	s.construction_speed = (base + s.construction_speed_bonus) * energy_multiplier
 
 
 func _compute_population(s: SimulationState, delta_years: float) -> void:
@@ -193,6 +193,8 @@ func _apply_unlock_payload(s: SimulationState, node: TechNode) -> void:
 		s.milestone_flags["energy_bonus_" + node.id] = true
 	if modifiers.has("research_rate_bonus"):
 		s.research_rate_bonus += float(modifiers["research_rate_bonus"])
+	if modifiers.has("construction_speed_bonus"):
+		s.construction_speed_bonus += float(modifiers["construction_speed_bonus"])
 
 
 func _compute_factions(s: SimulationState, delta_years: float, result: TickResult) -> void:
