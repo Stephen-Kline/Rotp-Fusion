@@ -2,8 +2,8 @@ extends Control
 # Universe minimap. Background: faint Milky Way (always visible).
 # Foreground scale increases as exploration milestones unlock.
 
-const W := 200.0
-const H := 200.0
+const W := 260.0
+const H := 148.0
 const BG := Color(0.02, 0.02, 0.07)
 
 var _state: SimulationState
@@ -89,11 +89,11 @@ func _draw_sol_indicator() -> void:
 
 func _draw_earth_moon() -> void:
 	var center := Vector2(W * 0.5, H * 0.5)
-	var t := Time.get_ticks_msec() / 9000.0   # full orbit ~9 s realtime
+	# Match 3D view: moon_orbit rotates at 2.8 deg/s → period = 360/2.8 ≈ 128.6 s
+	var moon_angle := Time.get_ticks_msec() / 1000.0 * (2.8 * TAU / 360.0)
 
-	var orbit_r := H * 0.26
-	# Tilt orbit slightly (Moon's orbit is inclined ~5° to ecliptic — represent as ellipse)
-	var moon_angle := t * TAU
+	var orbit_r := H * 0.30
+	# Tilt orbit slightly (Moon's orbit is inclined — represent as ellipse)
 	var moon_off := Vector2(cos(moon_angle), sin(moon_angle) * 0.38) * orbit_r
 	var moon_pos := center + moon_off
 

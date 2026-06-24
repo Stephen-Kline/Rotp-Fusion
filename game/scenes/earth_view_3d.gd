@@ -104,7 +104,7 @@ func _build_3d_world() -> void:
 	vp.add_child(sun)
 
 	var cam := Camera3D.new()
-	cam.position = Vector3(0.0, 0.8, 6.0)
+	cam.position = Vector3(0.0, 5.5, 3.5)
 	vp.add_child(cam)
 	cam.look_at(Vector3(0, 0, 0), Vector3.UP)
 
@@ -116,6 +116,7 @@ func _build_3d_world() -> void:
 
 	_build_earth()
 	_build_orbital_objects(vp)
+	_build_distance_rings(vp)
 
 	_rocket_root = Node3D.new()
 	vp.add_child(_rocket_root)
@@ -226,6 +227,67 @@ func _build_orbital_objects(vp: Node) -> void:
 	mat_craft.emission_energy_multiplier = 2.0
 	m_craft.surface_set_material(0, mat_craft)
 	_transit_craft.add_child(_inst(m_craft))
+
+
+func _build_distance_rings(vp: Node) -> void:
+	var ring_root := Node3D.new()
+	vp.add_child(ring_root)
+
+	# [radius_in_scene_units, label_text, alpha]
+	var rings: Array[Array] = [
+		[1.80, "LEO  ~500 km",       0.30],
+		[2.30, "MEO  ~20,000 km",    0.22],
+		[3.20, "GEO  ~36,000 km",    0.18],
+		[MOON_DIST + 0.25, "Lunar orbit  ~384,000 km", 0.16],
+	]
+
+	for r_data: Array in rings:
+		var radius: float = r_data[0]
+		var label: String = r_data[1]
+		var alpha: float  = r_data[2]
+		_ring(ring_root, radius, Color(0.35, 0.60, 1.0, alpha), label)
+
+
+func _ring(parent: Node3D, radius: float, col: Color, label: String) -> void:
+	const SEG := 128
+	var verts := PackedVector3Array()
+	var idx   := PackedInt32Array()
+	for i in SEG:
+		var a := float(i) / SEG * TAU
+		verts.append(Vector3(cos(a) * radius, 0.0, sin(a) * radius))
+	for i in SEG:
+		idx.append(i)
+		idx.append((i + 1) % SEG)
+
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_INDEX]  = idx
+
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_LINES, arrays)
+
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = col
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+
+	mesh.surface_set_material(0, mat)
+
+	var inst := MeshInstance3D.new()
+	inst.mesh = mesh
+	parent.add_child(inst)
+
+	if label != "":
+		var lbl := Label3D.new()
+		lbl.text = label
+		lbl.pixel_size = 0.006
+		lbl.font_size = 52
+		lbl.modulate = col.lightened(0.25)
+		lbl.position = Vector3(radius + 0.08, 0.02, 0.0)
+		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lbl.no_depth_test = true
+		parent.add_child(lbl)
 
 
 func _add_satellite(parent: Node3D) -> void:

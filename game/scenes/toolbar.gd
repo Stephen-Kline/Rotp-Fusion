@@ -1,5 +1,5 @@
 extends PanelContainer
-# Full-width top toolbar. Builds its own UI in _ready().
+# Single-row top toolbar. ~40 px tall. Builds its own UI in _ready().
 
 signal speed_change_requested(level: int)
 signal tech_tree_toggled
@@ -24,8 +24,7 @@ const _LEVELS := [
 	Constants.CompressionLevel.FASTER,
 	Constants.CompressionLevel.MAX,
 ]
-
-const _SPEED_NAMES := {
+const _SPEED_NAMES: Dictionary = {
 	Constants.CompressionLevel.PAUSED:  "Paused",
 	Constants.CompressionLevel.SLOW:    "0.2×",
 	Constants.CompressionLevel.NORMAL:  "1×",
@@ -36,90 +35,95 @@ const _SPEED_NAMES := {
 
 
 func _ready() -> void:
+	custom_minimum_size = Vector2(0, 42)
+
 	var margin := MarginContainer.new()
-	for side in ["margin_left","margin_right","margin_top","margin_bottom"]:
-		margin.add_theme_constant_override(side, 6)
+	for s in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(s, 5)
 	add_child(margin)
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 20)
-	margin.add_child(row)
+	# Three sections, each wrapped in a CenterContainer for vertical centering
+	var root := HBoxContainer.new()
+	root.add_theme_constant_override("separation", 0)
+	margin.add_child(root)
 
-	# ── Left: status stats ──────────────────────────────────────────────────
+	# ── Left status ──────────────────────────────────────────────────────────
+	var left_wrap := CenterContainer.new()
+	left_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.add_child(left_wrap)
+
 	var left := HBoxContainer.new()
-	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left.alignment = BoxContainer.ALIGNMENT_BEGIN
-	left.add_theme_constant_override("separation", 20)
-	row.add_child(left)
+	left.add_theme_constant_override("separation", 14)
+	left_wrap.add_child(left)
 
-	_power_val    = _stat(left, "POWER")
-	_pop_val      = _stat(left, "POPULATION")
-	_research_val = _stat(left, "RESEARCH")
-	_build_val    = _stat(left, "BUILD SPEED")
+	_power_val    = _stat(left, "Power")
+	_pop_val      = _stat(left, "Pop")
+	_research_val = _stat(left, "Research")
+	_build_val    = _stat(left, "Build")
 
-	# ── Center: year + speed controls ───────────────────────────────────────
-	var center := VBoxContainer.new()
-	center.custom_minimum_size = Vector2(200, 0)
-	center.alignment = BoxContainer.ALIGNMENT_CENTER
-	center.add_theme_constant_override("separation", 2)
-	row.add_child(center)
+	root.add_child(_vsep())
+
+	# ── Center: year + speed ─────────────────────────────────────────────────
+	var mid_wrap := CenterContainer.new()
+	mid_wrap.custom_minimum_size = Vector2(310, 0)
+	root.add_child(mid_wrap)
+
+	var mid := HBoxContainer.new()
+	mid.alignment = BoxContainer.ALIGNMENT_CENTER
+	mid.add_theme_constant_override("separation", 6)
+	mid_wrap.add_child(mid)
+
+	var slow_btn := Button.new()
+	slow_btn.text = "◀"
+	slow_btn.flat = true
+	slow_btn.pressed.connect(_on_slow)
+	mid.add_child(slow_btn)
 
 	_year_label = Label.new()
 	_year_label.text = "Year 1960"
 	_year_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_year_label.add_theme_font_size_override("font_size", 18)
-	center.add_child(_year_label)
+	_year_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_year_label.custom_minimum_size = Vector2(110, 0)
+	_year_label.add_theme_font_size_override("font_size", 16)
+	mid.add_child(_year_label)
 
-	var speed_row := HBoxContainer.new()
-	speed_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	speed_row.add_theme_constant_override("separation", 4)
-	center.add_child(speed_row)
+	var fast_btn := Button.new()
+	fast_btn.text = "▶"
+	fast_btn.flat = true
+	fast_btn.pressed.connect(_on_fast)
+	mid.add_child(fast_btn)
 
-	var slow_btn := Button.new()
-	slow_btn.text = "◀  Slow"
-	slow_btn.pressed.connect(_on_slow)
-	speed_row.add_child(slow_btn)
+	mid.add_child(_vsep())
 
 	_pause_btn = Button.new()
 	_pause_btn.text = "⏸ Pause"
 	_pause_btn.pressed.connect(_on_pause)
-	speed_row.add_child(_pause_btn)
-
-	var fast_btn := Button.new()
-	fast_btn.text = "Fast  ▶"
-	fast_btn.pressed.connect(_on_fast)
-	speed_row.add_child(fast_btn)
+	mid.add_child(_pause_btn)
 
 	_speed_label = Label.new()
 	_speed_label.text = "Paused"
-	_speed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_speed_label.add_theme_font_size_override("font_size", 10)
-	_speed_label.modulate = Color(0.65, 0.65, 0.7)
-	center.add_child(_speed_label)
+	_speed_label.add_theme_font_size_override("font_size", 11)
+	_speed_label.modulate = Color(0.60, 0.60, 0.68)
+	_speed_label.custom_minimum_size = Vector2(40, 0)
+	mid.add_child(_speed_label)
 
-	# ── Right: K-scale + buttons ────────────────────────────────────────────
+	root.add_child(_vsep())
+
+	# ── Right: K-scale + buttons ─────────────────────────────────────────────
+	var right_wrap := CenterContainer.new()
+	root.add_child(right_wrap)
+
 	var right := HBoxContainer.new()
-	right.alignment = BoxContainer.ALIGNMENT_END
 	right.add_theme_constant_override("separation", 10)
-	row.add_child(right)
-
-	var k_vbox := VBoxContainer.new()
-	k_vbox.add_theme_constant_override("separation", 0)
-	right.add_child(k_vbox)
-
-	var k_hdr := Label.new()
-	k_hdr.text = "KARDASHEV"
-	k_hdr.add_theme_font_size_override("font_size", 9)
-	k_hdr.modulate = Color(0.6, 0.6, 0.7)
-	k_vbox.add_child(k_hdr)
+	right_wrap.add_child(right)
 
 	_kard_label = Label.new()
 	_kard_label.text = "K 0.70"
-	_kard_label.add_theme_font_size_override("font_size", 16)
+	_kard_label.add_theme_font_size_override("font_size", 15)
 	_kard_label.modulate = Color(0.75, 0.88, 1.0)
-	k_vbox.add_child(_kard_label)
+	right.add_child(_kard_label)
 
-	right.add_child(VSeparator.new())
+	right.add_child(_vsep())
 
 	var tech_btn := Button.new()
 	tech_btn.text = "Tech Tree"
@@ -132,34 +136,32 @@ func _ready() -> void:
 	right.add_child(log_btn)
 
 
-func _stat(parent: HBoxContainer, header: String) -> Label:
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 0)
-	parent.add_child(vbox)
+func _stat(parent: HBoxContainer, name_text: String) -> Label:
+	var lbl := Label.new()
+	lbl.text = name_text + ": --"
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	parent.add_child(lbl)
+	return lbl
 
-	var hdr := Label.new()
-	hdr.text = header
-	hdr.add_theme_font_size_override("font_size", 9)
-	hdr.modulate = Color(0.58, 0.58, 0.68)
-	vbox.add_child(hdr)
 
-	var val := Label.new()
-	val.text = "--"
-	val.add_theme_font_size_override("font_size", 14)
-	vbox.add_child(val)
-	return val
+func _vsep() -> VSeparator:
+	var s := VSeparator.new()
+	s.custom_minimum_size = Vector2(1, 0)
+	return s
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
 func refresh(state: SimulationState) -> void:
 	_year_label.text = "Year %d" % state.year
-	_power_val.text    = "%d%%" % roundi(state.energy_capacity * 100.0)
-	_pop_val.text      = "%.0f M" % state.population_units
-	_research_val.text = "%.1f pts/yr" % state.research_rate
-	_build_val.text    = "%d%%" % roundi(state.construction_speed * 100.0)
-	_power_val.modulate = Color(1.0, 0.35, 0.35) if state.energy_capacity < 0.3 else Color.WHITE
-	_kard_label.text = "K %.2f" % _kardashev(state)
+	var low := state.energy_capacity < 0.3
+	_power_val.text    = "Power: %d%%" % roundi(state.energy_capacity * 100.0)
+	_power_val.modulate = Color(1.0, 0.35, 0.35) if low else Color.WHITE
+	_pop_val.text      = "Pop: %.0fM" % state.population_units
+	_research_val.text = "Research: %.1f pts/yr" % state.research_rate
+	_build_val.text    = "Build: %d%%" % roundi(state.construction_speed * 100.0)
+	_kard_label.text   = "K %.2f" % _kardashev(state)
 
 
 func apply_compression(level: int) -> void:

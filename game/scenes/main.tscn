@@ -45,7 +45,7 @@ script = ExtResource("earth3d")
 [node name="TopBar" type="PanelContainer" parent="UI/EarthView"]
 layout_mode = 1
 anchor_right = 1.0
-offset_bottom = 70.0
+offset_bottom = 42.0
 script = ExtResource("tb")
 
 [node name="RightScroll" type="ScrollContainer" parent="UI/EarthView"]
@@ -54,7 +54,7 @@ anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -330.0
-offset_top = 70.0
+offset_top = 42.0
 horizontal_scroll_mode = 0
 
 [node name="RightPanel" type="VBoxContainer" parent="UI/EarthView/RightScroll"]
@@ -76,8 +76,8 @@ layout_mode = 1
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 8.0
-offset_top = -210.0
-offset_right = 208.0
+offset_top = -160.0
+offset_right = 268.0
 offset_bottom = -8.0
 script = ExtResource("mm")
 
@@ -101,7 +101,7 @@ anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 0.0
 offset_left = -620.0
-offset_top = 76.0
+offset_top = 48.0
 offset_right = -20.0
 offset_bottom = 526.0
 
