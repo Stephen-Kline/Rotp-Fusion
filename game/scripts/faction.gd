@@ -4,7 +4,7 @@ class_name Faction
 
 var id: String = ""
 var display_name: String = ""
-var ideological_type: String = ""  # militarist/expansionist/technocrat/cooperativist/traditionalist/isolationist
+var ideological_type: String = ""  # technocrat/industrialist/environmentalist/internationalist/conservative
 var preferred_pillar: String = ""  # food/education/industry/energy
 var satisfaction: float = 50.0    # 0–100
 var weight: float = 0.0           # 0–1, how much political capital this faction generates

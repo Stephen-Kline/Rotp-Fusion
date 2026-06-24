@@ -69,12 +69,11 @@ func _init() -> void:
 
 func _init_factions() -> void:
 	factions = [
-		Faction.new("militarist",     "Military-Industrial", "militarist",     "industry",  45.0, 0.20),
-		Faction.new("expansionist",   "Expansionist",        "expansionist",   "industry",  55.0, 0.18),
-		Faction.new("technocrat",     "Technocrats",         "technocrat",     "education", 50.0, 0.22),
-		Faction.new("cooperativist",  "Cooperativists",      "cooperativist",  "food",      60.0, 0.15),
-		Faction.new("traditionalist", "Traditionalists",     "traditionalist", "food",      65.0, 0.12),
-		Faction.new("isolationist",   "Isolationists",       "isolationist",   "energy",    40.0, 0.13),
+		Faction.new("technocrat",       "Technocrats",       "technocrat",       "education", 55.0, 0.25),
+		Faction.new("industrialist",    "Industrialists",    "industrialist",    "industry",  50.0, 0.25),
+		Faction.new("environmentalist", "Environmentalists", "environmentalist", "energy",    45.0, 0.20),
+		Faction.new("internationalist", "Internationalists", "internationalist", "food",      55.0, 0.15),
+		Faction.new("conservative",     "Conservatives",     "conservative",     "food",      62.0, 0.15),
 	]
 
 

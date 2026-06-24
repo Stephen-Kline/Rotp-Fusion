@@ -34,6 +34,7 @@ func _ready() -> void:
 		func(): tech_tree_panel.hide()
 	)
 
+	faction_panel.hide()
 	budget_panel.allocation_changed.connect(_on_allocation_changed)
 	faction_panel.spend_capital_requested.connect(_on_spend_capital)
 

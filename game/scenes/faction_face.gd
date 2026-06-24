@@ -16,8 +16,9 @@ func set_satisfaction(value: float) -> void:
 
 
 func _draw() -> void:
-	var c := Vector2(SIZE * 0.5, SIZE * 0.5)
-	var r := SIZE * 0.46
+	var s := minf(size.x, size.y)   # draw at actual control size, not const
+	var c := size * 0.5
+	var r := s * 0.46
 
 	# Head fill
 	draw_circle(c, r, _face_color())
@@ -26,16 +27,17 @@ func _draw() -> void:
 
 	# Eyes
 	var eye_y := c.y - r * 0.22
-	draw_circle(Vector2(c.x - r * 0.30, eye_y), r * 0.13, Color(0.08, 0.08, 0.08))
-	draw_circle(Vector2(c.x + r * 0.30, eye_y), r * 0.13, Color(0.08, 0.08, 0.08))
+	var eye_r  := maxf(r * 0.13, 1.0)
+	draw_circle(Vector2(c.x - r * 0.30, eye_y), eye_r, Color(0.08, 0.08, 0.08))
+	draw_circle(Vector2(c.x + r * 0.30, eye_y), eye_r, Color(0.08, 0.08, 0.08))
 
 	# Brow (angry = angled down toward center)
 	if satisfaction < 25.0:
 		var bx := r * 0.28; var bw := r * 0.22
 		draw_line(Vector2(c.x - bx - bw, eye_y - r * 0.24),
-				  Vector2(c.x - bx + bw, eye_y - r * 0.14), Color(0.08, 0.08, 0.08), 1.5)
+				  Vector2(c.x - bx + bw, eye_y - r * 0.14), Color(0.08, 0.08, 0.08), 1.2)
 		draw_line(Vector2(c.x + bx - bw, eye_y - r * 0.14),
-				  Vector2(c.x + bx + bw, eye_y - r * 0.24), Color(0.08, 0.08, 0.08), 1.5)
+				  Vector2(c.x + bx + bw, eye_y - r * 0.24), Color(0.08, 0.08, 0.08), 1.2)
 
 	# Mouth — arc curving up (happy) or down (sad)
 	# curve: +1 = big smile, 0 = flat, -1 = big frown

@@ -7,6 +7,7 @@ const H := 148.0
 const BG := Color(0.02, 0.02, 0.07)
 
 var _state: SimulationState
+var _elapsed := 0.0
 
 
 func _init() -> void:
@@ -17,7 +18,8 @@ func _ready() -> void:
 	set_process(true)
 
 
-func _process(_dt: float) -> void:
+func _process(dt: float) -> void:
+	_elapsed += dt
 	if visible:
 		queue_redraw()
 
@@ -89,12 +91,13 @@ func _draw_sol_indicator() -> void:
 
 func _draw_earth_moon() -> void:
 	var center := Vector2(W * 0.5, H * 0.5)
-	# Match 3D view: moon_orbit rotates at 2.8 deg/s → period = 360/2.8 ≈ 128.6 s
-	var moon_angle := Time.get_ticks_msec() / 1000.0 * (2.8 * TAU / 360.0)
+	# Sync to 3D view: moon_orbit rotates at 2.8 deg/s, both start at elapsed=0
+	var moon_angle := _elapsed * (2.8 * TAU / 360.0)
 
 	var orbit_r := H * 0.30
 	# Tilt orbit slightly (Moon's orbit is inclined — represent as ellipse)
-	var moon_off := Vector2(cos(moon_angle), sin(moon_angle) * 0.38) * orbit_r
+	# Negate Y: in top-down map view, +Z world (far side) = up in minimap
+	var moon_off := Vector2(cos(moon_angle), -sin(moon_angle) * 0.55) * orbit_r
 	var moon_pos := center + moon_off
 
 	# Orbit ring
