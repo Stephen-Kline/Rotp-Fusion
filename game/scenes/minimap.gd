@@ -95,15 +95,15 @@ func _draw_earth_moon() -> void:
 	var moon_angle := _elapsed * (2.8 * TAU / 360.0)
 
 	var orbit_r := H * 0.30
-	# Top-down view: 3D X=right → minimap X=right; 3D +Z=toward camera=south → minimap +Y=down
-	var moon_off := Vector2(cos(moon_angle), sin(moon_angle) * 0.55) * orbit_r
+	# 3D Y-rotation: +X → -Z (away from cam = north = minimap up = -Y), so Y uses -sin
+	var moon_off := Vector2(cos(moon_angle), -sin(moon_angle) * 0.55) * orbit_r
 	var moon_pos := center + moon_off
 
 	# Orbit ring as ellipse matching the moon's actual path
 	var orbit_pts := PackedVector2Array()
 	for i in 65:
 		var a := float(i) / 64.0 * TAU
-		orbit_pts.append(center + Vector2(cos(a), sin(a) * 0.55) * orbit_r)
+		orbit_pts.append(center + Vector2(cos(a), -sin(a) * 0.55) * orbit_r)
 	draw_polyline(orbit_pts, Color(0.40, 0.45, 0.60, 0.22), 0.8, false)
 
 	# Earth
