@@ -1,6 +1,7 @@
-[gd_scene load_steps=13 format=3 uid="uid://main"]
+[gd_scene load_steps=14 format=3 uid="uid://main"]
 
 [ext_resource type="Script" path="res://scenes/star_field.gd" id="stars"]
+[ext_resource type="Script" path="res://scenes/solar_system.gd" id="solar"]
 [ext_resource type="Script" path="res://scenes/earth_view_3d.gd" id="earth3d"]
 [ext_resource type="Script" path="res://scenes/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/game_loop.gd" id="2"]
@@ -41,6 +42,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 stretch = true
 script = ExtResource("earth3d")
+
+[node name="SolarSystem" type="Control" parent="UI/EarthView"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("solar")
+visible = false
 
 [node name="TopBar" type="PanelContainer" parent="UI/EarthView"]
 layout_mode = 1

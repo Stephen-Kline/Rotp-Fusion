@@ -21,6 +21,7 @@ config/icon="res://assets/icon.svg"
 Constants="*res://autoload/constants.gd"
 AssetRegistry="*res://autoload/asset_registry.gd"
 EventSystem="*res://autoload/event_system.gd"
+ScaleEngine="*res://autoload/scale_engine.gd"
 
 [display]
 

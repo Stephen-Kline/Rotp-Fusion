@@ -103,7 +103,7 @@ func _ready() -> void:
 	mid.add_child(kpi_row)
 
 	_year_label = Label.new()
-	_year_label.text = "1960"
+	_year_label.text = "1950"
 	_year_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_year_label.add_theme_font_size_override("font_size", 16)
 	_year_label.add_theme_color_override("font_color", _ORANGE)

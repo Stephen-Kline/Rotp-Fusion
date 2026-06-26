@@ -3,7 +3,7 @@ class_name SimulationState
 # Pure data — no logic. Governor reads this and returns a new instance each tick.
 
 # Time
-var year: int = 1960
+var year: int = 1950
 
 # Economic pillars (allocation as percentages, must sum to 100)
 var pillar_food: float = 25.0

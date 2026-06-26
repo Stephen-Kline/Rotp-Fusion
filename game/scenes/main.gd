@@ -1,14 +1,16 @@
 extends Node
 
-@onready var game_loop:      Node                = $GameLoop
-@onready var toolbar:        PanelContainer      = $UI/EarthView/TopBar
-@onready var budget_panel:   PanelContainer      = $UI/EarthView/BudgetDropdown
-@onready var faction_panel:  PanelContainer      = $UI/EarthView/RightScroll/RightPanel/FactionPanel
-@onready var event_log:      Control             = $UI/EarthView/EventLog
-@onready var tech_tree_panel: Control            = $UI/TechTreePanel
-@onready var victory_overlay: Control            = $UI/VictoryOverlay
-@onready var earth_view:     SubViewportContainer = $UI/EarthView/EarthContainer
-@onready var minimap:        Control             = $UI/EarthView/Minimap
+@onready var game_loop:       Node                = $GameLoop
+@onready var toolbar:         PanelContainer      = $UI/EarthView/TopBar
+@onready var budget_panel:    PanelContainer      = $UI/EarthView/BudgetDropdown
+@onready var faction_panel:   PanelContainer      = $UI/EarthView/RightScroll/RightPanel/FactionPanel
+@onready var event_log:       Control             = $UI/EarthView/EventLog
+@onready var tech_tree_panel: Control             = $UI/TechTreePanel
+@onready var victory_overlay: Control             = $UI/VictoryOverlay
+@onready var earth_view:      SubViewportContainer = $UI/EarthView/EarthContainer
+@onready var minimap:         Control             = $UI/EarthView/Minimap
+@onready var star_field:      Control             = $UI/EarthView/Background
+@onready var solar_system:    Control             = $UI/EarthView/SolarSystem
 
 var _milestone1_shown: bool = false
 
@@ -42,6 +44,10 @@ func _ready() -> void:
 	budget_panel.allocation_changed.connect(_on_allocation_changed)
 	faction_panel.spend_capital_requested.connect(_on_spend_capital)
 
+	# Scale engine: zone transitions swap active view
+	ScaleEngine.zone_changed.connect(_on_zone_changed)
+	solar_system.link_star_field(star_field)
+
 	# Prime all panels with initial state (game starts paused)
 	var s: SimulationState = game_loop.state
 	earth_view.update_state(s)
@@ -61,9 +67,20 @@ func _on_tick(state: SimulationState) -> void:
 	faction_panel.refresh(state)
 	if tech_tree_panel.visible:
 		tech_tree_panel.refresh(state)
+	solar_system.update_state(state)
 	if not _milestone1_shown and state.milestone_flags.get("moon_landing", false):
 		_milestone1_shown = true
 		victory_overlay.show_victory(state.year)
+
+
+func _on_zone_changed(zone: int) -> void:
+	var in_solar := zone >= 3
+	earth_view.visible = not in_solar
+	minimap.visible    = not in_solar
+	solar_system.visible = in_solar
+	# Reset star field parallax when returning to Earth view
+	if not in_solar:
+		star_field.set_camera_offset(Vector2.ZERO)
 
 
 func _on_speed_change(level: int) -> void:
@@ -88,5 +105,13 @@ func _on_research_requested(node_id: String) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F5:
-		get_tree().reload_current_scene()
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_F5:
+				get_tree().reload_current_scene()
+			KEY_M:
+				# Toggle between Earth view (zone 1) and Inner Solar (zone 3)
+				if ScaleEngine.current_zone == 1:
+					ScaleEngine.transition_to(3)
+				else:
+					ScaleEngine.transition_to(1)
