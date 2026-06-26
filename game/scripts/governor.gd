@@ -4,7 +4,22 @@ class_name Governor
 # new SimulationState and a list of events to emit via EventSystem.
 # No side effects, no UI coupling.
 
-const ENERGY_LOW_THRESHOLD := 0.3  # below this, debuffs apply
+# Base production rates at 100% budget allocation, no tech bonuses, no structures.
+# budget_factor(25%) ≈ 0.457, so starting rates at equal 25% splits are:
+#   Energy:      ~91 EJ/yr   → K_energy  ≈ 0.70
+#   Consumables: ~1.8 Pcal/yr
+#   Knowledge:   ~914 Mbits/yr → K_knowledge ≈ 0.70
+#   Materials:   ~9.1 Gt/yr
+const BASE_ENERGY_RATE      := 2e20  # J/yr
+const BASE_CONSUMABLES_RATE := 4e15  # kcal/yr
+const BASE_KNOWLEDGE_RATE   := 2e9   # bits/yr
+const BASE_MATERIALS_RATE   := 2e10  # tonnes/yr
+
+# Interaction thresholds: below 15% of base, a resource is "critically low"
+# and penalizes other resource production rates.
+const CRITICAL_FLOOR := 0.15
+
+const ENERGY_LOW_THRESHOLD := 0.3  # legacy: below this, display shows warning
 
 var _tech_db: TechTreeDB
 
@@ -92,10 +107,7 @@ func tick(state: SimulationState, delta_years: float) -> TickResult:
 
 	next.year = state.year + int(delta_years)
 
-	_compute_energy(next)
-	_compute_research_rate(next)
-	_compute_construction_speed(next)
-	_compute_population(next, delta_years)
+	_compute_resources(next, delta_years)
 	_tick_research(next, delta_years, result)
 	_check_leo_milestones(next, result)
 	_tick_moon_mission(next, delta_years, result)
@@ -105,26 +117,54 @@ func tick(state: SimulationState, delta_years: float) -> TickResult:
 	return result
 
 
-func _compute_energy(s: SimulationState) -> void:
-	s.energy_capacity = clamp(s.pillar_energy / 50.0, 0.0, 1.0)
+func _compute_resources(s: SimulationState, delta_years: float) -> void:
+	# Budget → base production rates (soft diminishing returns with floor)
+	var bf_e := _budget_factor(s.pillar_energy)
+	var bf_c := _budget_factor(s.pillar_food)
+	var bf_k := _budget_factor(s.pillar_education)
+	var bf_m := _budget_factor(s.pillar_industry)
 
+	var base_e := BASE_ENERGY_RATE      * bf_e
+	var base_c := BASE_CONSUMABLES_RATE * bf_c
+	var base_k := BASE_KNOWLEDGE_RATE   * bf_k
+	var base_m := BASE_MATERIALS_RATE   * bf_m
 
-func _compute_research_rate(s: SimulationState) -> void:
-	var base := s.pillar_education / 100.0
-	var energy_multiplier := 1.0 if s.energy_capacity >= ENERGY_LOW_THRESHOLD else 0.5
-	s.research_rate = base * energy_multiplier * 10.0
+	# Light cross-resource interactions:
+	#   Consumables low → all other rates penalized (starving civilization can't function)
+	#   Energy low      → Knowledge and Materials rates penalized (no power, no progress)
+	var cons_critical := BASE_CONSUMABLES_RATE * CRITICAL_FLOOR
+	var energy_critical := BASE_ENERGY_RATE * CRITICAL_FLOOR
+	var cons_mult   := clampf(base_c / cons_critical,   0.50, 1.0)
+	var energy_mult := clampf(base_e / energy_critical, 0.70, 1.0)
 
+	# Final rates: (budget_rate + structure_rate) × research_mult × interactions
+	s.energy_rate      = (base_e + s.struct_energy)      * s.mult_energy      * cons_mult
+	s.consumables_rate = (base_c + s.struct_consumables) * s.mult_consumables
+	s.knowledge_rate   = (base_k + s.struct_knowledge)   * s.mult_knowledge   * cons_mult * energy_mult
+	s.materials_rate   = (base_m + s.struct_materials)   * s.mult_materials   * cons_mult * energy_mult
 
-func _compute_construction_speed(s: SimulationState) -> void:
-	var base := s.pillar_industry / 100.0
-	var energy_multiplier := 1.0 if s.energy_capacity >= ENERGY_LOW_THRESHOLD else 0.5
-	s.construction_speed = (base + s.construction_speed_bonus) * energy_multiplier
+	# Accumulate stockpiles
+	s.energy_stockpile      += s.energy_rate      * delta_years
+	s.consumables_stockpile += s.consumables_rate * delta_years
+	s.knowledge_stockpile   += s.knowledge_rate   * delta_years
+	s.materials_stockpile   += s.materials_rate   * delta_years
 
+	# ── Legacy display fields (kept until UI layer is updated) ─────────────────
+	# energy_capacity: normalized 0–1 based on energy rate vs base
+	s.energy_capacity = clampf(s.energy_rate / BASE_ENERGY_RATE, 0.0, 1.0)
 
-func _compute_population(s: SimulationState, delta_years: float) -> void:
-	var food_factor := s.pillar_food / 25.0
-	var growth_rate := 0.01 * food_factor
-	s.population_units += s.population_units * growth_rate * delta_years
+	# research_rate: scaled knowledge rate used by _tick_research progress system
+	# Calibrated so starting value (~4.57) is similar to the old formula output (~2.5)
+	s.research_rate = (s.knowledge_rate / BASE_KNOWLEDGE_RATE) * 5.0 + s.research_rate_bonus
+
+	# construction_speed: scaled materials rate used for mission timing
+	s.construction_speed = clampf(
+		s.materials_rate / BASE_MATERIALS_RATE + s.construction_speed_bonus, 0.1, 5.0)
+
+	# population_units (millions): smoothly tracks consumables rate equilibrium
+	# ~1M people need ~7.3e11 kcal/year (2000 kcal/day)
+	var pop_target := s.consumables_rate / 7.3e11
+	s.population_units = lerpf(s.population_units, pop_target, 0.1 * delta_years)
 
 
 func _tick_research(s: SimulationState, delta_years: float, result: TickResult) -> void:
@@ -191,10 +231,21 @@ func _apply_unlock_payload(s: SimulationState, node: TechNode) -> void:
 	var modifiers: Dictionary = payload.get("stat_modifiers", {})
 	if modifiers.has("energy_bonus"):
 		s.milestone_flags["energy_bonus_" + node.id] = true
+	# Legacy additive bonuses (existing tech tree payloads)
 	if modifiers.has("research_rate_bonus"):
 		s.research_rate_bonus += float(modifiers["research_rate_bonus"])
 	if modifiers.has("construction_speed_bonus"):
 		s.construction_speed_bonus += float(modifiers["construction_speed_bonus"])
+	# Resource multipliers — new-style payloads tag a resource and supply a factor > 1.0
+	# e.g. "mult_energy": 1.15 increases Energy production rate by 15%
+	if modifiers.has("mult_energy"):
+		s.mult_energy *= float(modifiers["mult_energy"])
+	if modifiers.has("mult_consumables"):
+		s.mult_consumables *= float(modifiers["mult_consumables"])
+	if modifiers.has("mult_knowledge"):
+		s.mult_knowledge *= float(modifiers["mult_knowledge"])
+	if modifiers.has("mult_materials"):
+		s.mult_materials *= float(modifiers["mult_materials"])
 
 
 func _compute_factions(s: SimulationState, delta_years: float, result: TickResult) -> void:
@@ -246,6 +297,19 @@ func _compute_factions(s: SimulationState, delta_years: float, result: TickResul
 	for f: Faction in s.factions:
 		total += f.satisfaction
 	s.faction_satisfaction = total / float(s.factions.size()) if s.factions.size() > 0 else 50.0
+
+
+# ── Resource helpers ──────────────────────────────────────────────────────────
+
+# Budget allocation % → production factor. Soft diminishing returns with floor.
+#   0%   → 0.10  (civilization has momentum even with no investment)
+#   25%  → ~0.46
+#   50%  → ~0.68
+#   100% → 1.00
+func _budget_factor(pct: float) -> float:
+	const FLOOR := 0.10
+	const CURVE := 0.65
+	return FLOOR + (1.0 - FLOOR) * pow(clampf(pct, 0.0, 100.0) / 100.0, CURVE)
 
 
 func _check_gsa_preconditions(s: SimulationState, result: TickResult) -> void:
