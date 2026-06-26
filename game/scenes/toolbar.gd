@@ -11,18 +11,25 @@ const _ORANGE := Color(0.92, 0.48, 0.12)
 const _CREAM  := Color(0.94, 0.90, 0.80)
 const _CYAN   := Color(0.20, 0.82, 0.90)
 const _DIM    := Color(0.38, 0.45, 0.58)
+const _WARN   := Color(1.00, 0.28, 0.10)
 
 var _current_level: int = Constants.CompressionLevel.PAUSED
 
-var _power_val:      Label
-var _pop_val:        Label
-var _research_val:   Label
-var _build_val:      Label
-var _year_label:     Label
-var _kard_label:     Label
-var _speed_btns:     Array[Button]  = []
-var _faction_faces:  Array[Control] = []
-var _faction_abbrs:  Array[Label]   = []
+# Each resource: [rate_label, stock_label]
+var _energy_rate:  Label
+var _energy_stock: Label
+var _cons_rate:    Label
+var _cons_stock:   Label
+var _know_rate:    Label
+var _know_stock:   Label
+var _matl_rate:    Label
+var _matl_stock:   Label
+
+var _year_label:    Label
+var _kard_label:    Label
+var _speed_btns:    Array[Button]  = []
+var _faction_faces: Array[Control] = []
+var _faction_abbrs: Array[Label]   = []
 
 const FactionFace = preload("res://scenes/faction_face.gd")
 const _RH         = preload("res://scripts/resource_helpers.gd")
@@ -70,10 +77,10 @@ func _ready() -> void:
 	)
 	root.add_child(left)
 
-	_power_val    = _stat(left, "Energy")
-	_pop_val      = _stat(left, "Cons")
-	_research_val = _stat(left, "Know")
-	_build_val    = _stat(left, "Matl")
+	var ep := _stat(left, "Energy"); _energy_rate = ep[0]; _energy_stock = ep[1]
+	var cp := _stat(left, "Cons");   _cons_rate   = cp[0]; _cons_stock   = cp[1]
+	var kp := _stat(left, "Know");   _know_rate   = kp[0]; _know_stock   = kp[1]
+	var mp := _stat(left, "Matl");   _matl_rate   = mp[0]; _matl_stock   = mp[1]
 
 	var caret := Label.new()
 	caret.text = " ▾"
@@ -175,14 +182,27 @@ func _ready() -> void:
 	root.add_child(rpad)
 
 
-func _stat(parent: HBoxContainer, label: String) -> Label:
-	var lbl := Label.new()
-	lbl.text = label + ": --"
-	lbl.add_theme_font_size_override("font_size", 12)
-	lbl.add_theme_color_override("font_color", _CREAM)
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	parent.add_child(lbl)
-	return lbl
+# Returns [rate_label, stock_label] stacked in a VBoxContainer column.
+# Top row: resource name + rate (small, dim).  Bottom row: stockpile (cream).
+func _stat(parent: HBoxContainer, name: String) -> Array:
+	var col := VBoxContainer.new()
+	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	col.add_theme_constant_override("separation", 0)
+	parent.add_child(col)
+
+	var rate_lbl := Label.new()
+	rate_lbl.text = name + ": --"
+	rate_lbl.add_theme_font_size_override("font_size", 10)
+	rate_lbl.add_theme_color_override("font_color", _DIM)
+	col.add_child(rate_lbl)
+
+	var stock_lbl := Label.new()
+	stock_lbl.text = "--"
+	stock_lbl.add_theme_font_size_override("font_size", 11)
+	stock_lbl.add_theme_color_override("font_color", _CREAM)
+	col.add_child(stock_lbl)
+
+	return [rate_lbl, stock_lbl]
 
 
 func _vsep() -> VSeparator:
@@ -196,20 +216,26 @@ func _vsep() -> VSeparator:
 func refresh(state: SimulationState) -> void:
 	_year_label.text = "%d" % state.year
 
-	# K score: 60% energy + 40% knowledge weighted blend
 	var k_e := _RH.k_from_energy(state.energy_rate)
 	var k_k := _RH.k_from_knowledge(state.knowledge_rate)
 	_kard_label.text = "K %.2f" % clampf(0.60 * k_e + 0.40 * k_k, 0.0, 2.0)
 
-	# Energy — warn when critically low (below 15% of base rate)
 	var low_energy := state.energy_capacity < 0.15
-	_power_val.text = "Energy: " + _RH.format_si(state.energy_rate, "J")
-	_power_val.add_theme_color_override("font_color",
-		Color(1.0, 0.28, 0.10) if low_energy else _CREAM)
+	var rate_color := _WARN if low_energy else _DIM
 
-	_pop_val.text      = "Cons: "   + _RH.format_si(state.consumables_rate, "cal")
-	_research_val.text = "Know: "   + _RH.format_si(state.knowledge_rate,   "bits")
-	_build_val.text    = "Matl: "   + _RH.format_si(state.materials_rate,   "t")
+	_energy_rate.text  = "Energy: " + _RH.format_si(state.energy_rate, "J") + "/yr"
+	_energy_rate.add_theme_color_override("font_color", rate_color)
+	_energy_stock.text = _RH.format_si(state.energy_stockpile, "J")
+	_energy_stock.add_theme_color_override("font_color", _WARN if low_energy else _CREAM)
+
+	_cons_rate.text  = "Cons: "   + _RH.format_si(state.consumables_rate,      "cal")  + "/yr"
+	_cons_stock.text = _RH.format_si(state.consumables_stockpile, "cal")
+
+	_know_rate.text  = "Know: "   + _RH.format_si(state.knowledge_rate,   "bits") + "/yr"
+	_know_stock.text = _RH.format_si(state.knowledge_stockpile, "bits")
+
+	_matl_rate.text  = "Matl: "   + _RH.format_si(state.materials_rate,   "t")    + "/yr"
+	_matl_stock.text = _RH.format_si(state.materials_stockpile, "t")
 
 	for i in mini(state.factions.size(), _faction_faces.size()):
 		var f: Faction = state.factions[i]
