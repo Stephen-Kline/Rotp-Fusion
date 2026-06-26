@@ -15,7 +15,6 @@ extends Node
 @onready var notification_panel: Control             = $UI/EarthView/NotificationPanel
 
 var _milestone1_shown: bool = false
-var _transitioning: bool = false
 var _fleet_panel: FleetPanel = null
 
 
@@ -112,25 +111,16 @@ func _on_zone_changed(zone: int) -> void:
 		star_field.set_camera_offset(Vector2.ZERO)
 
 
-# Fade to black → swap zone → fade in. Guards against re-entrancy.
+# Flash overlay and swap zone immediately — no coroutine, no stuck state.
 func _do_transition(to_zone: int) -> void:
-	if _transitioning or to_zone == ScaleEngine.current_zone:
+	if to_zone == ScaleEngine.current_zone:
 		return
-	_transitioning = true
-
-	fade_overlay.visible = true
-	fade_overlay.modulate.a = 0.0
-	var t1 := create_tween()
-	t1.tween_property(fade_overlay, "modulate:a", 1.0, 0.25)
-	await t1.finished
-
 	ScaleEngine.transition_to(to_zone)
-
-	var t2 := create_tween()
-	t2.tween_property(fade_overlay, "modulate:a", 0.0, 0.35)
-	await t2.finished
-	fade_overlay.visible = false
-	_transitioning = false
+	fade_overlay.modulate.a = 0.5
+	fade_overlay.visible = true
+	var t := create_tween()
+	t.tween_property(fade_overlay, "modulate:a", 0.0, 0.4)
+	t.tween_callback(func(): fade_overlay.visible = false)
 
 
 func _on_speed_change(level: int) -> void:

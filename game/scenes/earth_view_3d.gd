@@ -8,7 +8,7 @@ const CLOUD_R   := 1.56
 const ATMO_R    := 1.63
 const ORBIT_SAT := 2.05
 const ORBIT_STN := 2.28
-const MOON_DIST := 4.3
+const MOON_DIST := 14.0   # ~9× Earth radius — visually representative of actual distance
 
 var _time        := 0.0
 var _earth_root: Node3D
@@ -99,6 +99,7 @@ const _CONTINENTS_UV: Array = [
 func _ready() -> void:
 	stretch = true
 	_build_3d_world()
+	ScaleEngine.zone_changed.connect(_on_zone_changed)
 
 
 func _build_3d_world() -> void:
@@ -611,10 +612,28 @@ func _orient_y_up(node: Node3D, pos: Vector3) -> void:
 	node.basis = Basis(right, up, right.cross(up).cross(right))
 
 
+# ── Zone-aware camera presets ─────────────────────────────────────────────────
+
+func _on_zone_changed(zone: int) -> void:
+	if zone == 1:
+		# Earth System — close up, Moon off to the side
+		_look_at    = Vector3.ZERO
+		_cam_offset = Vector3(0.0, 3.2, 6.0)
+	elif zone == 2:
+		# Cis-lunar — frame both Earth and Moon
+		_look_at    = Vector3(MOON_DIST * 0.42, 0.0, 0.0)
+		_cam_offset = Vector3(0.0, MOON_DIST * 0.75, MOON_DIST * 1.5)
+	_update_camera()
+
+
 # ── Pan / zoom ────────────────────────────────────────────────────────────────
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
+	if event is InputEventMagnifyGesture:
+		# Trackpad pinch: factor > 1 = fingers spreading apart = zoom in
+		_zoom_by(1.0 / event.factor)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
 				if event.pressed:
@@ -648,19 +667,21 @@ func _pan(delta_px: Vector2) -> void:
 	if not _cam:
 		return
 	var dist := _cam_offset.length()
-	var right := _cam.global_transform.basis.x
-	var up    := _cam.global_transform.basis.y
-	var pan   := (right * -delta_px.x + up * delta_px.y) * _PAN_SPEED * dist
-	_look_at += pan
-	# Clamp look-at so it doesn't drift too far from the Earth.
-	_look_at = _look_at.clampf(-4.0, 4.0)
+	# Project camera right onto the XZ plane — no elevation change.
+	var right_xz := Vector3(_cam.global_transform.basis.x.x, 0.0,
+		_cam.global_transform.basis.x.z).normalized()
+	var fwd_xz := Vector3(-_cam.global_transform.basis.z.x, 0.0,
+		-_cam.global_transform.basis.z.z).normalized()
+	_look_at += (right_xz * -delta_px.x + fwd_xz * -delta_px.y) * _PAN_SPEED * dist
+	_look_at.y = 0.0  # never leave the equatorial plane
+	var max_pan := MOON_DIST * 0.9
+	_look_at.x = clampf(_look_at.x, -max_pan, max_pan)
+	_look_at.z = clampf(_look_at.z, -max_pan, max_pan)
 	_update_camera()
 
 
 func _reset_camera() -> void:
-	_look_at   = Vector3.ZERO
-	_cam_offset = Vector3(0.0, 3.2, 6.0)
-	_update_camera()
+	_on_zone_changed(ScaleEngine.current_zone)
 
 
 func _update_camera() -> void:
