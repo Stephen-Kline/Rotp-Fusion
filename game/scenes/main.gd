@@ -196,13 +196,13 @@ func _input(event: InputEvent) -> void:
 				var zone := ScaleEngine.current_zone
 				if zone <= 2:
 					_do_transition(3)
-				elif zone <= 4:
+				elif zone <= 5:
 					_do_transition(1)
-				elif zone == 5:
-					_do_transition(3)
 				elif zone == 6:
-					_do_transition(5)
+					_do_transition(3)
 				elif zone == 7:
 					_do_transition(6)
+				elif zone == 8:
+					_do_transition(7)
 				else:
 					_do_transition(zone - 1)

@@ -9,7 +9,7 @@ const EARTH_RADIUS := 220.0
 # Orbital radii
 const ORBIT_SAT     := 255.0
 const ORBIT_STATION := 275.0
-const MOON_DIST     := 370.0
+const MOON_DIST     := 700.0
 
 var _time: float = 0.0
 var _completed: Array = []
@@ -31,7 +31,7 @@ const PROPULSION_NODES := [
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(EARTH_RADIUS * 2 + MOON_DIST, EARTH_RADIUS * 2)
+	custom_minimum_size = Vector2(EARTH_CENTER.x + MOON_DIST + 50.0, EARTH_RADIUS * 2)
 
 
 func update_state(state: SimulationState) -> void:
@@ -186,18 +186,18 @@ func _draw_moon(center: Vector2) -> void:
 
 	if landed:
 		# Victory: bright glowing moon
-		draw_circle(moon_pos, 26.0, Color(1.0, 0.95, 0.7, 0.25))
-		draw_circle(moon_pos, 20.0, Color(0.95, 0.92, 0.78))
-		draw_circle(moon_pos, 20.0, Color(1.0, 0.98, 0.8, 0.5))
+		draw_circle(moon_pos, 34.0, Color(1.0, 0.95, 0.7, 0.25))
+		draw_circle(moon_pos, 26.0, Color(0.95, 0.92, 0.78))
+		draw_circle(moon_pos, 26.0, Color(1.0, 0.98, 0.8, 0.5))
 		# Flag dot
-		draw_circle(moon_pos + Vector2(4, -6), 2.5, Color(1.0, 0.2, 0.2))
+		draw_circle(moon_pos + Vector2(5, -8), 2.5, Color(1.0, 0.2, 0.2))
 	else:
 		if researched:
-			draw_circle(moon_pos, 20.0, Color(0.7, 0.75, 1.0, 0.15))
-		draw_circle(moon_pos, 16.0, moon_color)
-		# Craters
-		draw_circle(moon_pos + Vector2(-4, 3), 4.0, Color(0.7, 0.7, 0.65, 0.5))
-		draw_circle(moon_pos + Vector2(6, -5), 3.0, Color(0.7, 0.7, 0.65, 0.4))
-		draw_circle(moon_pos + Vector2(2, 7), 2.5, Color(0.7, 0.7, 0.65, 0.35))
+			draw_circle(moon_pos, 28.0, Color(0.7, 0.75, 1.0, 0.15))
+		draw_circle(moon_pos, 22.0, moon_color)
+		# Craters (scaled up)
+		draw_circle(moon_pos + Vector2(-5, 4), 5.5, Color(0.7, 0.7, 0.65, 0.5))
+		draw_circle(moon_pos + Vector2(8, -6), 4.0, Color(0.7, 0.7, 0.65, 0.4))
+		draw_circle(moon_pos + Vector2(3, 9), 3.5, Color(0.7, 0.7, 0.65, 0.35))
 		# Shadow side
-		draw_circle(moon_pos + Vector2(5, 0), 14.0, Color(0.02, 0.02, 0.06, glow_alpha))
+		draw_circle(moon_pos + Vector2(7, 0), 19.0, Color(0.02, 0.02, 0.06, glow_alpha))
