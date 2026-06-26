@@ -1,27 +1,28 @@
 extends PanelContainer
 
 # Four-pillar budget allocation panel.
-# Row names match the toolbar KPIs (Power/Population/Research/Construction).
-# Each row header shows both the allocation % and the current output value.
+# Each row: allocation slider + % label + live SI-formatted production rate.
 
 signal allocation_changed(food: float, education: float, industry: float, energy: float)
 
-# Energy → Power
+const _RH = preload("res://scripts/resource_helpers.gd")
+
+# Energy pillar
 @onready var _energy_slider:  HSlider = $MarginContainer/VBox/PowerRow/Slider
 @onready var _energy_pct:     Label   = $MarginContainer/VBox/PowerRow/Header/Pct
 @onready var _energy_outcome: Label   = $MarginContainer/VBox/PowerRow/Header/Outcome
 
-# Food → Population
+# Consumables pillar
 @onready var _food_slider:    HSlider = $MarginContainer/VBox/PopRow/Slider
 @onready var _food_pct:       Label   = $MarginContainer/VBox/PopRow/Header/Pct
 @onready var _food_outcome:   Label   = $MarginContainer/VBox/PopRow/Header/Outcome
 
-# Education → Research
+# Knowledge pillar
 @onready var _education_slider:   HSlider = $MarginContainer/VBox/ResearchRow/Slider
 @onready var _education_pct:      Label   = $MarginContainer/VBox/ResearchRow/Header/Pct
 @onready var _education_outcome:  Label   = $MarginContainer/VBox/ResearchRow/Header/Outcome
 
-# Industry → Construction
+# Materials pillar
 @onready var _industry_slider:   HSlider = $MarginContainer/VBox/BuildRow/Slider
 @onready var _industry_pct:      Label   = $MarginContainer/VBox/BuildRow/Header/Pct
 @onready var _industry_outcome:  Label   = $MarginContainer/VBox/BuildRow/Header/Outcome
@@ -50,14 +51,14 @@ func refresh(state: SimulationState) -> void:
 			state.pillar_education, state.pillar_industry)
 	_updating = false
 
-	# Outcome values — what each allocation is currently producing
-	var low_power := state.energy_capacity < 0.3
-	_energy_outcome.text = "%d%%" % roundi(state.energy_capacity * 100.0)
-	_energy_outcome.modulate = Color(1.0, 0.35, 0.35) if low_power else Color(0.65, 0.75, 0.9)
+	# Outcome values — live SI-formatted production rates
+	var low_energy := state.energy_capacity < 0.15
+	_energy_outcome.text = _RH.format_si(state.energy_rate, "J")
+	_energy_outcome.modulate = Color(1.0, 0.35, 0.35) if low_energy else Color(1, 1, 1, 1)
 
-	_food_outcome.text      = "%.0fM pop" % state.population_units
-	_education_outcome.text = "%.1f/yr" % state.research_rate
-	_industry_outcome.text  = "%d%% spd" % roundi(state.construction_speed * 100.0)
+	_food_outcome.text      = _RH.format_si(state.consumables_rate, "cal")
+	_education_outcome.text = _RH.format_si(state.knowledge_rate,   "bits")
+	_industry_outcome.text  = _RH.format_si(state.materials_rate,   "t")
 
 
 func _on_slider_changed(value: float, pillar: String) -> void:

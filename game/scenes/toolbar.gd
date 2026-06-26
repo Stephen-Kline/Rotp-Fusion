@@ -25,6 +25,7 @@ var _faction_faces:  Array[Control] = []
 var _faction_abbrs:  Array[Label]   = []
 
 const FactionFace = preload("res://scenes/faction_face.gd")
+const _RH         = preload("res://scripts/resource_helpers.gd")
 
 const _LEVELS := [
 	Constants.CompressionLevel.PAUSED,
@@ -69,10 +70,10 @@ func _ready() -> void:
 	)
 	root.add_child(left)
 
-	_power_val    = _stat(left, "Power")
-	_pop_val      = _stat(left, "Pop")
-	_research_val = _stat(left, "R&D")
-	_build_val    = _stat(left, "Build")
+	_power_val    = _stat(left, "Energy")
+	_pop_val      = _stat(left, "Cons")
+	_research_val = _stat(left, "Know")
+	_build_val    = _stat(left, "Matl")
 
 	var caret := Label.new()
 	caret.text = " ▾"
@@ -194,15 +195,21 @@ func _vsep() -> VSeparator:
 
 func refresh(state: SimulationState) -> void:
 	_year_label.text = "%d" % state.year
-	_kard_label.text = "K %.2f" % _kardashev(state)
 
-	var low := state.energy_capacity < 0.3
-	_power_val.text = "Power: %d%%" % roundi(state.energy_capacity * 100.0)
+	# K score: 60% energy + 40% knowledge weighted blend
+	var k_e := _RH.k_from_energy(state.energy_rate)
+	var k_k := _RH.k_from_knowledge(state.knowledge_rate)
+	_kard_label.text = "K %.2f" % clampf(0.60 * k_e + 0.40 * k_k, 0.0, 2.0)
+
+	# Energy — warn when critically low (below 15% of base rate)
+	var low_energy := state.energy_capacity < 0.15
+	_power_val.text = "Energy: " + _RH.format_si(state.energy_rate, "J")
 	_power_val.add_theme_color_override("font_color",
-		Color(1.0, 0.28, 0.10) if low else _CREAM)
-	_pop_val.text      = "Pop: %.0fM" % state.population_units
-	_research_val.text = "R&D: %.1f/yr" % state.research_rate
-	_build_val.text    = "Build: %d%%" % roundi(state.construction_speed * 100.0)
+		Color(1.0, 0.28, 0.10) if low_energy else _CREAM)
+
+	_pop_val.text      = "Cons: "   + _RH.format_si(state.consumables_rate, "cal")
+	_research_val.text = "Know: "   + _RH.format_si(state.knowledge_rate,   "bits")
+	_build_val.text    = "Matl: "   + _RH.format_si(state.materials_rate,   "t")
 
 	for i in mini(state.factions.size(), _faction_faces.size()):
 		var f: Faction = state.factions[i]
@@ -222,17 +229,3 @@ func apply_compression(level: int) -> void:
 func _emit(level: int) -> void:
 	apply_compression(level)
 	speed_change_requested.emit(level)
-
-
-# ── Kardashev estimate ────────────────────────────────────────────────────────
-
-func _kardashev(state: SimulationState) -> float:
-	var milestones := ["suborbital_flight", "orbital_satellite", "crewed_orbit",
-		"long_duration_crewed", "modular_station", "expanded_station",
-		"gsa_founded", "lunar_transit", "lunar_probe_complete",
-		"crewed_lunar_vehicle", "space_telescope", "seti_array"]
-	var done := 0
-	for m in milestones:
-		if state.milestone_flags.get(m, false):
-			done += 1
-	return 0.70 + 0.30 * (float(done) / float(milestones.size()))

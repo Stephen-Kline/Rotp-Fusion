@@ -9,7 +9,17 @@ static func format_si(value: float, base_unit: String) -> String:
 	while v >= 1000.0 and idx < PREFIXES.size() - 1:
 		v /= 1000.0
 		idx += 1
-	return "%.3g %s%s" % [v if value >= 0.0 else -v, PREFIXES[idx], base_unit]
+	if value < 0.0:
+		v = -v
+	# 3 significant figures without %g (unsupported in GDScript)
+	var s: String
+	if absf(v) < 10.0:
+		s = "%.2f" % v
+	elif absf(v) < 100.0:
+		s = "%.1f" % v
+	else:
+		s = "%d" % roundi(v)
+	return s + " " + PREFIXES[idx] + base_unit
 
 # Budget allocation → production factor.
 # Soft diminishing returns with a floor so 0% allocation never kills a resource.

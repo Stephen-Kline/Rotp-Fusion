@@ -31,7 +31,7 @@ theme_override_colors/font_color = Color(0.20, 0.82, 0.90, 1.0)
 [node name="Name" type="Label" parent="MarginContainer/VBox/PowerRow/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Power"
+text = "Energy"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.94, 0.90, 0.80, 1.0)
 
@@ -43,7 +43,7 @@ theme_override_colors/font_color = Color(0.92, 0.48, 0.12, 1.0)
 
 [node name="Outcome" type="Label" parent="MarginContainer/VBox/PowerRow/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 0)
+custom_minimum_size = Vector2(90, 0)
 horizontal_alignment = 2
 text = "---"
 theme_override_font_sizes/font_size = 11
@@ -63,7 +63,7 @@ value = 25.0
 [node name="Name" type="Label" parent="MarginContainer/VBox/PopRow/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Population"
+text = "Consumables"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.94, 0.90, 0.80, 1.0)
 
@@ -75,7 +75,7 @@ theme_override_colors/font_color = Color(0.92, 0.48, 0.12, 1.0)
 
 [node name="Outcome" type="Label" parent="MarginContainer/VBox/PopRow/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 0)
+custom_minimum_size = Vector2(90, 0)
 horizontal_alignment = 2
 text = "---"
 theme_override_font_sizes/font_size = 11
@@ -95,7 +95,7 @@ value = 25.0
 [node name="Name" type="Label" parent="MarginContainer/VBox/ResearchRow/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Research"
+text = "Knowledge"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.94, 0.90, 0.80, 1.0)
 
@@ -107,7 +107,7 @@ theme_override_colors/font_color = Color(0.92, 0.48, 0.12, 1.0)
 
 [node name="Outcome" type="Label" parent="MarginContainer/VBox/ResearchRow/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 0)
+custom_minimum_size = Vector2(90, 0)
 horizontal_alignment = 2
 text = "---"
 theme_override_font_sizes/font_size = 11
@@ -127,7 +127,7 @@ value = 25.0
 [node name="Name" type="Label" parent="MarginContainer/VBox/BuildRow/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Construction"
+text = "Materials"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.94, 0.90, 0.80, 1.0)
 
@@ -139,7 +139,7 @@ theme_override_colors/font_color = Color(0.92, 0.48, 0.12, 1.0)
 
 [node name="Outcome" type="Label" parent="MarginContainer/VBox/BuildRow/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(60, 0)
+custom_minimum_size = Vector2(90, 0)
 horizontal_alignment = 2
 text = "---"
 theme_override_font_sizes/font_size = 11
