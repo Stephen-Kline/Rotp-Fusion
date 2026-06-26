@@ -29,11 +29,8 @@ func update_state(state: SimulationState) -> void:
 
 
 func _draw() -> void:
-	# Solid background
 	draw_rect(Rect2(Vector2.ZERO, Vector2(W, H)), BG, true)
 	draw_rect(Rect2(Vector2.ZERO, Vector2(W, H)), Color(0.25, 0.30, 0.45, 0.5), false, 1.0)
-
-	_draw_galaxy_backdrop()
 
 	if _state == null:
 		return
@@ -42,8 +39,6 @@ func _draw() -> void:
 		_draw_inner_solar_system()
 	else:
 		_draw_earth_moon()
-
-	_draw_sol_indicator()
 
 
 # ── Galaxy backdrop (always drawn faintly) ────────────────────────────────────
