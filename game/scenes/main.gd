@@ -16,6 +16,8 @@ extends Node
 
 var _milestone1_shown: bool = false
 var _fleet_panel: FleetPanel = null
+var _m_prev: bool = false
+var _f5_prev: bool = false
 
 
 func _ready() -> void:
@@ -83,6 +85,34 @@ func _ready() -> void:
 	budget_panel.refresh(s)
 	faction_panel.refresh(s)
 	tech_tree_panel.refresh(s)
+
+
+func _process(_delta: float) -> void:
+	var m_now := Input.is_key_pressed(KEY_M)
+	if m_now and not _m_prev:
+		_handle_map_key()
+	_m_prev = m_now
+
+	var f5_now := Input.is_key_pressed(KEY_F5)
+	if f5_now and not _f5_prev:
+		get_tree().reload_current_scene()
+	_f5_prev = f5_now
+
+
+func _handle_map_key() -> void:
+	var zone := ScaleEngine.current_zone
+	if zone <= 2:
+		_do_transition(3)
+	elif zone <= 5:
+		_do_transition(1)
+	elif zone == 6:
+		_do_transition(3)
+	elif zone == 7:
+		_do_transition(6)
+	elif zone == 8:
+		_do_transition(7)
+	else:
+		_do_transition(zone - 1)
 
 
 func _on_tick(state: SimulationState) -> void:
@@ -176,23 +206,3 @@ func _on_launch_ship(ship_id: String, destination: String, use_direct: bool) -> 
 	game_loop.queue_action(PlayerAction.launch_ship(ship_id, destination, use_direct))
 
 
-func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed:
-		match event.keycode:
-			KEY_F5:
-				get_tree().reload_current_scene()
-			KEY_M:
-				# M retreats one scale level: Earth ↔ Solar ↔ Near Stars ↔ Local Bubble ↔ Galactic
-				var zone := ScaleEngine.current_zone
-				if zone <= 2:
-					_do_transition(3)
-				elif zone <= 5:
-					_do_transition(1)
-				elif zone == 6:
-					_do_transition(3)
-				elif zone == 7:
-					_do_transition(6)
-				elif zone == 8:
-					_do_transition(7)
-				else:
-					_do_transition(zone - 1)
