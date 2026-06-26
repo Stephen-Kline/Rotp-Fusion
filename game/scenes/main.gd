@@ -11,15 +11,16 @@ extends Node
 @onready var minimap:         Control             = $UI/EarthView/Minimap
 @onready var star_field:      Control             = $UI/EarthView/Background
 @onready var solar_system:    Control             = $UI/EarthView/SolarSystem
+@onready var fade_overlay:    ColorRect           = $UI/FadeOverlay
 
 var _milestone1_shown: bool = false
+var _transitioning: bool = false
 
 
 func _ready() -> void:
 	game_loop.tick_processed.connect(_on_tick)
 	EventSystem.time_pause_requested.connect(_on_pause_requested)
 
-	# Toolbar signals
 	toolbar.speed_change_requested.connect(_on_speed_change)
 	toolbar.tech_tree_toggled.connect(func():
 		if not tech_tree_panel.visible:
@@ -44,11 +45,10 @@ func _ready() -> void:
 	budget_panel.allocation_changed.connect(_on_allocation_changed)
 	faction_panel.spend_capital_requested.connect(_on_spend_capital)
 
-	# Scale engine: zone transitions swap active view
 	ScaleEngine.zone_changed.connect(_on_zone_changed)
 	solar_system.link_star_field(star_field)
+	solar_system.zone_transition_requested.connect(_do_transition)
 
-	# Prime all panels with initial state (game starts paused)
 	var s: SimulationState = game_loop.state
 	earth_view.update_state(s)
 	minimap.update_state(s)
@@ -74,13 +74,33 @@ func _on_tick(state: SimulationState) -> void:
 
 
 func _on_zone_changed(zone: int) -> void:
-	var in_solar := zone >= 3
-	earth_view.visible = not in_solar
-	minimap.visible    = not in_solar
-	solar_system.visible = in_solar
-	# Reset star field parallax when returning to Earth view
-	if not in_solar:
+	var in_earth := zone <= 2
+	earth_view.visible = in_earth
+	minimap.visible    = in_earth
+	solar_system.visible = not in_earth
+	if in_earth:
 		star_field.set_camera_offset(Vector2.ZERO)
+
+
+# Fade to black → swap zone → fade in. Guards against re-entrancy.
+func _do_transition(to_zone: int) -> void:
+	if _transitioning or to_zone == ScaleEngine.current_zone:
+		return
+	_transitioning = true
+
+	fade_overlay.visible = true
+	fade_overlay.modulate.a = 0.0
+	var t1 := create_tween()
+	t1.tween_property(fade_overlay, "modulate:a", 1.0, 0.25)
+	await t1.finished
+
+	ScaleEngine.transition_to(to_zone)
+
+	var t2 := create_tween()
+	t2.tween_property(fade_overlay, "modulate:a", 0.0, 0.35)
+	await t2.finished
+	fade_overlay.visible = false
+	_transitioning = false
 
 
 func _on_speed_change(level: int) -> void:
@@ -110,8 +130,11 @@ func _input(event: InputEvent) -> void:
 			KEY_F5:
 				get_tree().reload_current_scene()
 			KEY_M:
-				# Toggle between Earth view (zone 1) and Inner Solar (zone 3)
-				if ScaleEngine.current_zone == 1:
-					ScaleEngine.transition_to(3)
+				# Toggle: Earth ↔ Solar (zone 3) ↔ Star map (zone 5) via M
+				var zone := ScaleEngine.current_zone
+				if zone <= 2:
+					_do_transition(3)
+				elif zone <= 4:
+					_do_transition(1)
 				else:
-					ScaleEngine.transition_to(1)
+					_do_transition(3)

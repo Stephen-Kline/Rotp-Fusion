@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://main"]
+[gd_scene load_steps=15 format=3 uid="uid://main"]
 
 [ext_resource type="Script" path="res://scenes/star_field.gd" id="stars"]
 [ext_resource type="Script" path="res://scenes/solar_system.gd" id="solar"]
@@ -127,3 +127,13 @@ layout_mode = 1
 
 [node name="VictoryOverlay" parent="UI" instance=ExtResource("12")]
 layout_mode = 1
+
+[node name="FadeOverlay" type="ColorRect" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 1)
+modulate = Color(1, 1, 1, 0)
+mouse_filter = 2
+visible = false
