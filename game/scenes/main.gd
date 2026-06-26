@@ -16,6 +16,7 @@ extends Node
 
 var _milestone1_shown: bool = false
 var _transitioning: bool = false
+var _fleet_panel: FleetPanel = null
 
 
 func _ready() -> void:
@@ -52,6 +53,29 @@ func _ready() -> void:
 	EventSystem.time_slow_requested.connect(_on_time_slow)
 	notification_panel.notification_dismissed.connect(_on_notification_dismissed)
 
+	_fleet_panel = FleetPanel.new()
+	$UI/EarthView.add_child(_fleet_panel)
+	_fleet_panel.anchor_left   = 1.0
+	_fleet_panel.anchor_right  = 1.0
+	_fleet_panel.anchor_top    = 0.0
+	_fleet_panel.anchor_bottom = 1.0
+	_fleet_panel.offset_left   = -300.0
+	_fleet_panel.offset_right  = 0.0
+	_fleet_panel.offset_top    = 42.0
+	_fleet_panel.offset_bottom = 0.0
+	_fleet_panel.hide()
+
+	toolbar.fleet_toggled.connect(func():
+		if _fleet_panel.visible:
+			_fleet_panel.hide()
+		else:
+			_fleet_panel.refresh(game_loop.state)
+			_fleet_panel.show()
+	)
+	_fleet_panel.build_structure_requested.connect(_on_build_structure)
+	_fleet_panel.build_ship_requested.connect(_on_build_ship)
+	_fleet_panel.launch_ship_requested.connect(_on_launch_ship)
+
 	var s: SimulationState = game_loop.state
 	earth_view.update_state(s)
 	minimap.update_state(s)
@@ -71,6 +95,8 @@ func _on_tick(state: SimulationState) -> void:
 	if tech_tree_panel.visible:
 		tech_tree_panel.refresh(state)
 	solar_system.update_state(state)
+	if _fleet_panel.visible:
+		_fleet_panel.refresh(state)
 	if not _milestone1_shown and state.milestone_flags.get("moon_landing", false):
 		_milestone1_shown = true
 		victory_overlay.show_victory(int(state.year))
@@ -146,6 +172,18 @@ func _on_spend_capital(faction_id: String, amount: float) -> void:
 
 func _on_research_requested(node_id: String) -> void:
 	game_loop.queue_action(PlayerAction.set_active_research(node_id))
+
+
+func _on_build_structure(structure_type: String, body: String) -> void:
+	game_loop.queue_action(PlayerAction.build_structure(structure_type, body))
+
+
+func _on_build_ship(build_option: String) -> void:
+	game_loop.queue_action(PlayerAction.build_ship(build_option))
+
+
+func _on_launch_ship(ship_id: String, destination: String, use_direct: bool) -> void:
+	game_loop.queue_action(PlayerAction.launch_ship(ship_id, destination, use_direct))
 
 
 func _input(event: InputEvent) -> void:

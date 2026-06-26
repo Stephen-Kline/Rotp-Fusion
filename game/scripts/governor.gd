@@ -136,6 +136,7 @@ func _apply_action(s: SimulationState, action: PlayerAction) -> void:
 			ship.origin_body = origin
 			ship.propulsion_tier = PropulsionData.best_tier(s.completed_research)
 			ship.ship_state = Ship.ShipState.BUILDING
+			ship.build_start_year = s.year
 			ship.build_complete_year = s.year + build_yr / maxf(s.construction_speed, 0.001)
 			s.ships.append(ship)
 

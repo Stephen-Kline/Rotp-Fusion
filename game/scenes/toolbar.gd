@@ -5,6 +5,7 @@ signal speed_change_requested(level: int)
 signal tech_tree_toggled
 signal event_log_toggled
 signal budget_toggled
+signal fleet_toggled
 
 const _NAVY   := Color(0.06, 0.10, 0.22)
 const _ORANGE := Color(0.92, 0.48, 0.12)
@@ -161,6 +162,13 @@ func _ready() -> void:
 	log_btn.add_theme_color_override("font_color", _CREAM)
 	log_btn.pressed.connect(func(): event_log_toggled.emit())
 	right.add_child(log_btn)
+
+	var fleet_btn := Button.new()
+	fleet_btn.text = "Fleet"
+	fleet_btn.flat = true
+	fleet_btn.add_theme_color_override("font_color", _CREAM)
+	fleet_btn.pressed.connect(func(): fleet_toggled.emit())
+	right.add_child(fleet_btn)
 
 	var rpad := Control.new(); rpad.custom_minimum_size = Vector2(10, 0)
 	root.add_child(rpad)

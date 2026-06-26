@@ -35,6 +35,7 @@ var trajectory_type: int = TrajectoryType.HOHMANN
 var ship_state: int = ShipState.BUILDING
 
 # Timeline (all in game-years)
+var build_start_year: float = 0.0           # construction started
 var build_complete_year: float = 0.0        # construction done → AWAITING_WINDOW
 var mission_authorized_year: float = 0.0   # when player confirmed launch
 var departure_year: float = 0.0            # actual burn start (after window wait)
@@ -65,6 +66,7 @@ func duplicate() -> Ship:
 	s.origin_body = origin_body; s.destination_body = destination_body
 	s.propulsion_tier = propulsion_tier; s.trajectory_type = trajectory_type
 	s.ship_state = ship_state
+	s.build_start_year = build_start_year
 	s.build_complete_year = build_complete_year
 	s.mission_authorized_year = mission_authorized_year
 	s.departure_year = departure_year; s.arrival_year = arrival_year
