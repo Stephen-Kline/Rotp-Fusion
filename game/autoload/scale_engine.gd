@@ -19,7 +19,7 @@ const ZONES := [
 ]
 
 var current_zone: int = 1
-var _max_unlocked: int = 3  # Inner Solar accessible from the start for testing
+var _max_unlocked: int = 9  # All zones unlocked for development
 
 
 func zone_data() -> Dictionary:

@@ -1,5 +1,5 @@
 extends Control
-# 2D space map — zones 3+ (solar system) and 5+ (star map).
+# 2D space map — zones 3+ (solar system), 5+ (star map), 7+ (galactic).
 # Dispatches rendering based on ScaleEngine.current_zone.
 # Emits zone_transition_requested when zoom crosses a boundary.
 
@@ -9,7 +9,6 @@ const _CREAM  := Color(0.94, 0.90, 0.80)
 const _ORANGE := Color(0.92, 0.48, 0.12)
 const _CYAN   := Color(0.20, 0.82, 0.90)
 const _DIM    := Color(0.38, 0.45, 0.58)
-const _WARN   := Color(1.00, 0.28, 0.10)
 
 # ── Solar system data ─────────────────────────────────────────────────────────
 # [name, semi-major axis AU, period years, angle at 1950 deg, color, dot radius px]
@@ -24,10 +23,9 @@ const PLANETS := [
 	["Neptune",30.069,164.80000,  195.88, Color(0.30, 0.45, 0.85), 6.0],
 ]
 
-# ── Nearby star data (zone 5+) ────────────────────────────────────────────────
+# ── Nearby star data (zones 5-6) ──────────────────────────────────────────────
 # [name, x_pc, y_pc, spectral, has_hz_planet]
-# Positions in parsecs relative to Sol, approximate galactic-plane projection.
-# Distances from Sol are accurate to ±0.1 pc; directions are approximate.
+# Positions in parsecs relative to Sol. Distances accurate to ~0.1 pc.
 const NEARBY_STARS := [
 	["Sol",             0.00,  0.00, "G2V", true ],
 	["Alpha Centauri", -0.51, -1.20, "G2V", true ],
@@ -46,20 +44,51 @@ const NEARBY_STARS := [
 	["Tau Ceti",       -2.20, -2.82, "G8V", true ],
 ]
 
+# ── Galactic map data (zones 7-9) ─────────────────────────────────────────────
+# Sol sits in the Orion Spur at ~8.5 kpc from galactic center.
+# World coords: galactic center at (0,0) kpc; Y positive = down on screen.
+# Sol at theta=3π/2 in arm coordinates (see _galactic_arm_points).
+const SOL_GALACTIC_POS := Vector2(0.0, 8.5)   # kpc from galactic center
+
+# Logarithmic spiral tightness. b=0.25 gives ~15° pitch angle.
+const GALAXY_B := 0.25
+const GALACTIC_RADIUS := 14.0   # kpc, visual clip radius
+
+# [name, r0_kpc, theta0_rad, n_turns, color, width_kpc, is_sol_arm]
+# Calibrated so Sagittarius passes ~6.5 kpc and Perseus ~10.5 kpc at Sol's direction.
+const GALAXY_ARMS := [
+	["Sagittarius-Carina", 2.30, 0.50, 1.5, Color(0.62, 0.52, 0.34), 1.2, false],
+	["Scutum-Centaurus",   2.30, 2.07, 1.5, Color(0.58, 0.48, 0.30), 1.2, false],
+	["Perseus",            8.00, 3.64, 1.2, Color(0.65, 0.55, 0.36), 1.0, false],
+	["Norma-Outer",        8.00, 5.21, 1.2, Color(0.60, 0.50, 0.32), 1.0, false],
+	["Orion Spur",         7.50, 4.21, 0.30, Color(0.90, 0.82, 0.54), 0.7, true ],
+]
+
+# Named regions visible in zone 7 (Orion Arm) view.
+# [name, world_x_kpc, world_y_kpc]
+const GALACTIC_LANDMARKS := [
+	["Galactic Centre", 0.0,  0.0],
+	["Orion Nebula",    0.42, 8.92],
+	["Crab Nebula",    -1.93, 7.30],
+	["Vela SNR",       -0.88, 9.82],
+]
+
 # ── Camera state ──────────────────────────────────────────────────────────────
-# _ppu = pixels per world unit at zoom=1
-#   zones 3-4: AU   (80 px/AU  → Neptune at ~2400 px, good full-solar view)
-#   zones 5-6: pc   (200 px/pc → nearest stars at 200-700 px)
-#   zones 7+:  kpc  (150 px/kpc — future)
+# Pixels per world unit at zoom=1:
+#   zones 3-4: AU (80 px/AU)
+#   zones 5-6: pc (200 px/pc)
+#   zones 7-9: kpc (50 px/kpc)
 var _ppu: float = 80.0
 var _zoom: float = 1.0
-var _pan: Vector2 = Vector2.ZERO   # world-space camera center
+var _pan: Vector2 = Vector2.ZERO
 var _game_year: float = 1950.0
 var _dragging: bool = false
+var _drag_origin: Vector2 = Vector2.ZERO
+var _pan_origin: Vector2 = Vector2.ZERO
+var _did_drag: bool = false
 var _star_field: Control = null
-var _selected_star: int = -1       # index into NEARBY_STARS, -1 = none
+var _selected_star: int = -1
 
-# Zoom boundaries that trigger zone transitions
 const _ZOOM_OUT_THRESHOLD := 0.055
 const _ZOOM_IN_THRESHOLD  := 18.0
 
@@ -79,19 +108,38 @@ func update_state(state: SimulationState) -> void:
 	queue_redraw()
 
 
-# Called by ScaleEngine when zone changes — reset camera for new coordinate space.
 func _on_zone_changed(zone: int) -> void:
 	_ppu = _zone_ppu(zone)
-	_zoom = 1.0
-	_pan = Vector2.ZERO
 	_selected_star = -1
+	match zone:
+		3, 4:
+			_zoom = 1.0
+			_pan  = Vector2.ZERO
+		5:
+			_zoom = 1.0
+			_pan  = Vector2.ZERO   # Sol at (0,0) in parsec space
+		6:
+			_zoom = 0.08           # ~600 pc view; Local Bubble rings visible
+			_pan  = Vector2.ZERO
+		7:
+			_zoom = 2.0            # ~5 kpc visible radius around Sol
+			_pan  = SOL_GALACTIC_POS
+		8:
+			_zoom = 0.65           # full disc visible
+			_pan  = Vector2.ZERO   # galactic center at screen center
+		9:
+			_zoom = 0.38
+			_pan  = Vector2.ZERO
+		_:
+			_zoom = 1.0
+			_pan  = Vector2.ZERO
 	queue_redraw()
 
 
 func _zone_ppu(zone: int) -> float:
 	if zone <= 4: return 80.0
 	if zone <= 6: return 200.0
-	return 150.0
+	return 50.0
 
 
 # ── Coordinate helpers ────────────────────────────────────────────────────────
@@ -107,7 +155,9 @@ func _screen_to_world(screen: Vector2) -> Vector2:
 
 func _draw() -> void:
 	var zone := ScaleEngine.current_zone
-	if zone >= 5:
+	if zone >= 7:
+		_draw_galactic_map()
+	elif zone >= 5:
 		_draw_star_map()
 	else:
 		_draw_solar()
@@ -153,12 +203,10 @@ func _draw_planets() -> void:
 		var ang0: float       = float(p[3])
 		var color: Color      = p[4]
 		var dot_r: float      = float(p[5])
-
 		var orbit_r := a * _ppu * _zoom
 		if orbit_r >= 4.0:
 			draw_arc(_world_to_screen(Vector2.ZERO), orbit_r, 0.0, TAU, 128,
 				Color(color.r, color.g, color.b, 0.18), 1.0)
-
 		var angle_rad := deg_to_rad(ang0 + (360.0 / period) * (_game_year - 1950.0))
 		var sp := _world_to_screen(Vector2(cos(angle_rad), -sin(angle_rad)) * a)
 		if sp.x < -50 or sp.x > sz.x + 50 or sp.y < -50 or sp.y > sz.y + 50:
@@ -171,7 +219,7 @@ func _draw_planets() -> void:
 				pname, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.94, 0.90, 0.80, 0.85))
 
 
-# ── Star map (zones 5+) ───────────────────────────────────────────────────────
+# ── Star map (zones 5-6) ──────────────────────────────────────────────────────
 
 func _draw_star_map() -> void:
 	_draw_distance_rings([0.5, 1.0, 2.0, 5.0, 10.0, 25.0, 50.0], "pc")
@@ -185,38 +233,29 @@ func _draw_stars() -> void:
 	var font := ThemeDB.fallback_font
 	for i in NEARBY_STARS.size():
 		var s: Array = NEARBY_STARS[i]
-		var sname: String  = s[0]
-		var x: float       = float(s[1])
-		var y: float       = float(s[2])
+		var sname: String    = s[0]
+		var x: float         = float(s[1])
+		var y: float         = float(s[2])
 		var spectral: String = s[3]
-		var has_hz: bool   = s[4]
-
-		var sp := _world_to_screen(Vector2(x, -y))  # flip Y for screen coords
+		var has_hz: bool     = s[4]
+		var sp := _world_to_screen(Vector2(x, -y))
 		if sp.x < -20 or sp.x > sz.x + 20 or sp.y < -20 or sp.y > sz.y + 20:
 			continue
-
 		var color := _star_color(spectral)
 		var selected := i == _selected_star
 		var is_sol := i == 0
-
-		# Glow ring for selected or Sol
 		if selected:
 			draw_arc(sp, 10.0, 0.0, TAU, 64, Color(_CYAN.r, _CYAN.g, _CYAN.b, 0.6), 2.0)
 		elif is_sol:
 			draw_arc(sp, 9.0, 0.0, TAU, 64, Color(_ORANGE.r, _ORANGE.g, _ORANGE.b, 0.4), 2.0)
-
-		# HZ planet indicator (faint cyan ring inside)
 		if has_hz and _zoom > 0.3:
 			draw_arc(sp, 7.0, 0.0, TAU, 32, Color(_CYAN.r, _CYAN.g, _CYAN.b, 0.3), 1.0)
-
 		var r := 6.0 if is_sol else (4.5 if has_hz else 3.5)
 		draw_circle(sp, r, color)
-
 		if _zoom > 0.25 or selected:
-			var lcolor := _CYAN if selected else _CREAM
+			var lc := _CYAN if selected else _CREAM
 			draw_string(font, sp + Vector2(r + 4.0, 4.0),
-				sname, HORIZONTAL_ALIGNMENT_LEFT, -1, 10,
-				Color(lcolor.r, lcolor.g, lcolor.b, 0.9))
+				sname, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(lc.r, lc.g, lc.b, 0.9))
 
 
 func _draw_star_info() -> void:
@@ -226,19 +265,15 @@ func _draw_star_info() -> void:
 	var y: float         = float(s[2])
 	var spectral: String = s[3]
 	var has_hz: bool     = s[4]
-
 	var dist := sqrt(x * x + y * y)
 	var font := ThemeDB.fallback_font
 	var pad := 12.0
-	var bx := get_size().x - 200.0
+	var bx := get_size().x - 210.0
 	var by := 50.0
-
-	# Background panel
-	draw_rect(Rect2(bx - pad, by - pad, 188.0 + pad, 90.0 + pad),
+	draw_rect(Rect2(bx - pad, by - pad, 198.0 + pad, 90.0 + pad),
 		Color(0.06, 0.10, 0.22, 0.88))
-	draw_rect(Rect2(bx - pad, by - pad, 188.0 + pad, 90.0 + pad),
+	draw_rect(Rect2(bx - pad, by - pad, 198.0 + pad, 90.0 + pad),
 		Color(_CYAN.r, _CYAN.g, _CYAN.b, 0.3), false, 1.0)
-
 	draw_string(font, Vector2(bx, by),       sname,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 13, _CYAN)
 	draw_string(font, Vector2(bx, by + 20.0),
@@ -254,14 +289,142 @@ func _draw_star_info() -> void:
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 11, _DIM)
 
 
+# ── Galactic map (zones 7-9) ─────────────────────────────────────────────────
+
+func _draw_galactic_map() -> void:
+	_draw_galaxy_disc()
+	_draw_galaxy_arms()
+	_draw_galactic_core()
+	var zone := ScaleEngine.current_zone
+	if zone >= 8:
+		_draw_distance_rings([5.0, 10.0, 15.0, 20.0], "kpc")           # from galactic center
+	else:
+		_draw_distance_rings([0.5, 1.0, 2.0, 5.0], "kpc", SOL_GALACTIC_POS)  # from Sol
+	_draw_sol_galactic()
+	if zone == 7:
+		_draw_galactic_landmarks()
+	elif zone >= 8:
+		# Label galactic center when it's on-screen
+		var gc_sp := _world_to_screen(Vector2.ZERO)
+		draw_string(ThemeDB.fallback_font, gc_sp + Vector2(12.0, 4.0),
+			"Galactic Centre", HORIZONTAL_ALIGNMENT_LEFT, -1, 11,
+			Color(1.0, 0.88, 0.55, 0.6))
+
+
+func _draw_galaxy_disc() -> void:
+	var center := _world_to_screen(Vector2.ZERO)
+	# Build up disc haze with 5 concentric layers
+	for i in 5:
+		var r := (GALACTIC_RADIUS * (1.0 - i * 0.14)) * _ppu * _zoom
+		if r < 2.0: continue
+		draw_circle(center, r, Color(0.40, 0.35, 0.22, 0.03 + i * 0.008))
+
+
+func _draw_galactic_core() -> void:
+	var center := _world_to_screen(Vector2.ZERO)
+	# Galactic bar (~3 kpc half-length, tilted ~25°)
+	var bar_half := 3.0 * _ppu * _zoom
+	var bar_w := maxf(2.0, 0.9 * _ppu * _zoom)
+	var ba := deg_to_rad(25.0)
+	var bar_dir := Vector2(cos(ba), sin(ba)) * bar_half
+	draw_line(center - bar_dir, center + bar_dir, Color(0.88, 0.72, 0.40, 0.16), bar_w)
+	draw_line(center - bar_dir, center + bar_dir, Color(1.00, 0.90, 0.60, 0.22), maxf(1.0, bar_w * 0.3))
+	# Central bulge — concentric glows
+	for i in 7:
+		var r := maxf(1.0, (2.8 - i * 0.35) * _ppu * _zoom)
+		draw_circle(center, r, Color(1.0, 0.88, 0.55, 0.06 + i * 0.04))
+
+
+func _draw_galaxy_arms() -> void:
+	for arm: Array in GALAXY_ARMS:
+		var r0: float       = float(arm[1])
+		var theta0: float   = float(arm[2])
+		var n_turns: float  = float(arm[3])
+		var color: Color    = arm[4]
+		var width_kpc: float = float(arm[5])
+		var is_sol_arm: bool = arm[6]
+
+		var pts := _galactic_arm_points(r0, theta0, n_turns)
+		if pts.size() < 2:
+			continue
+
+		# Convert to screen space
+		var spts := PackedVector2Array()
+		spts.resize(pts.size())
+		for i in pts.size():
+			spts[i] = _world_to_screen(pts[i])
+
+		var w := maxf(1.0, width_kpc * _ppu * _zoom)
+		var ca := 0.30 if is_sol_arm else 0.20
+
+		# 3-pass soft glow: haze → body → bright core
+		draw_polyline(spts, Color(color.r, color.g, color.b, 0.04), w * 2.5, true)
+		draw_polyline(spts, Color(color.r, color.g, color.b, 0.12), w, true)
+		draw_polyline(spts, Color(color.r, color.g, color.b, ca),   w * 0.35, true)
+
+		# Arm label in zone 7-8 when arm is large enough
+		if _ppu * _zoom > 20.0 and pts.size() > 10:
+			var mid_pt := spts[pts.size() / 3]
+			var sz := get_size()
+			if mid_pt.x > 10 and mid_pt.x < sz.x - 10 and mid_pt.y > 10 and mid_pt.y < sz.y - 10:
+				var arm_name: String = arm[0]
+				draw_string(ThemeDB.fallback_font, mid_pt + Vector2(4, -4),
+					arm_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10,
+					Color(color.r + 0.2, color.g + 0.2, color.b + 0.1, 0.7))
+
+
+func _galactic_arm_points(r0: float, theta0: float, n_turns: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	var steps := 250
+	for i in steps + 1:
+		var t := float(i) / float(steps)
+		var theta := theta0 + t * n_turns * TAU
+		var r := r0 * exp(GALAXY_B * t * n_turns * TAU)
+		if r > GALACTIC_RADIUS + 2.0:
+			break
+		# -sin(theta) flips Y so positive world-Y is down on screen
+		pts.append(Vector2(r * cos(theta), -r * sin(theta)))
+	return pts
+
+
+func _draw_sol_galactic() -> void:
+	var sp := _world_to_screen(SOL_GALACTIC_POS)
+	var sz := get_size()
+	if sp.x < -20 or sp.x > sz.x + 20 or sp.y < -20 or sp.y > sz.y + 20:
+		return
+	draw_circle(sp, 4.5, Color(1.0, 0.90, 0.60))
+	draw_arc(sp, 7.0, 0.0, TAU, 32, Color(0.92, 0.48, 0.12, 0.55), 1.5)
+	# "You are here" pulse ring in far-out zones
+	if ScaleEngine.current_zone >= 8:
+		draw_arc(sp, 11.0, 0.0, TAU, 48, Color(0.92, 0.48, 0.12, 0.25), 1.0)
+	if _ppu * _zoom > 25.0:
+		draw_string(ThemeDB.fallback_font, sp + Vector2(9.0, 4.0),
+			"Sol", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, _ORANGE)
+
+
+func _draw_galactic_landmarks() -> void:
+	var sz := get_size()
+	for lm: Array in GALACTIC_LANDMARKS:
+		var lname: String = lm[0]
+		var lx: float     = float(lm[1])
+		var ly: float     = float(lm[2])
+		var sp := _world_to_screen(Vector2(lx, ly))
+		if sp.x < 10 or sp.x > sz.x - 10 or sp.y < 10 or sp.y > sz.y - 10:
+			continue
+		draw_circle(sp, 2.5, Color(0.60, 0.80, 0.90, 0.6))
+		draw_string(ThemeDB.fallback_font, sp + Vector2(5, 3),
+			lname, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(0.60, 0.80, 0.90, 0.55))
+
+
 # ── Shared helpers ────────────────────────────────────────────────────────────
 
-func _draw_distance_rings(intervals: Array, unit: String) -> void:
-	var anchor := _world_to_screen(Vector2.ZERO)
+func _draw_distance_rings(intervals: Array, unit: String,
+		world_anchor: Vector2 = Vector2.ZERO) -> void:
+	var anchor := _world_to_screen(world_anchor)
 	var font := ThemeDB.fallback_font
 	for r_v in intervals:
 		var r_world: float = float(r_v)
-		var r_px: float = r_world * _ppu * _zoom
+		var r_px: float    = r_world * _ppu * _zoom
 		if r_px < 40.0 or r_px > get_size().length() * 1.2:
 			continue
 		draw_arc(anchor, r_px, 0.0, TAU, 128, Color(0.38, 0.45, 0.58, 0.25), 1.0)
@@ -279,10 +442,13 @@ func _draw_zone_label() -> void:
 	var zone := ScaleEngine.current_zone
 	var zname: String = ScaleEngine.zone_data().get("name", "Space")
 	var hint: String
-	if zone >= 5:
-		hint = "scroll to zoom · drag to pan · click star to select · zoom in → solar system"
-	else:
-		hint = "scroll to zoom · drag to pan · zoom out → star map · M to return"
+	match zone:
+		9:    hint = "scroll to zoom · drag to pan · zoom in → Galactic Disc · M to retreat"
+		8:    hint = "scroll to zoom · drag to pan · zoom in → Orion Arm · zoom out → Full Galaxy · M to retreat"
+		7:    hint = "scroll to zoom · drag to pan · zoom out → Galactic Disc · M → Local Bubble"
+		6:    hint = "scroll to zoom · drag to pan · zoom in → Near Stars · zoom out → Orion Arm · M → Near Stars"
+		5:    hint = "scroll to zoom · drag to pan · click star to select · zoom in → solar"
+		_:    hint = "scroll to zoom · drag to pan · zoom out → star map · M to return"
 	draw_string(ThemeDB.fallback_font,
 		Vector2(16.0, get_size().y - 12.0),
 		zname + "  —  " + hint,
@@ -316,13 +482,18 @@ func _gui_input(event: InputEvent) -> void:
 			MOUSE_BUTTON_LEFT:
 				if event.pressed:
 					_dragging = true
+					_did_drag = false
+					_drag_origin = event.position
+					_pan_origin  = _pan
 				else:
-					# Only treat as click if no drag occurred
-					if not _dragging:
+					if not _did_drag:
 						_try_select_star(event.position)
 					_dragging = false
 	elif event is InputEventMouseMotion and _dragging:
-		_pan -= event.relative / (_ppu * _zoom)
+		var delta := event.position - _drag_origin
+		if delta.length() > 4.0:
+			_did_drag = true
+		_pan = _pan_origin - delta / (_ppu * _zoom)
 		_push_parallax()
 		queue_redraw()
 
@@ -340,22 +511,26 @@ func _zoom_at(screen_pos: Vector2, factor: float) -> void:
 func _check_zoom_thresholds() -> void:
 	var zone := ScaleEngine.current_zone
 	if _zoom <= _ZOOM_OUT_THRESHOLD:
-		# Zoom out: advance to next major zone
-		if zone <= 4:
-			zone_transition_requested.emit(5)   # solar → star map
-		elif zone <= 6:
-			zone_transition_requested.emit(7)   # star map → galactic (future)
+		match zone:
+			3, 4: zone_transition_requested.emit(5)
+			5:    zone_transition_requested.emit(6)   # Near Stars → Local Bubble
+			6:    zone_transition_requested.emit(7)   # Local Bubble → Orion Arm
+			7:    zone_transition_requested.emit(8)
+			8:    zone_transition_requested.emit(9)
 	elif _zoom >= _ZOOM_IN_THRESHOLD:
-		# Zoom in: retreat to previous major zone
-		if zone >= 5:
-			zone_transition_requested.emit(3)   # star map → solar
+		match zone:
+			5:    zone_transition_requested.emit(3)   # Near Stars → solar
+			6:    zone_transition_requested.emit(5)   # Local Bubble → Near Stars
+			7:    zone_transition_requested.emit(6)   # Orion Arm → Local Bubble
+			8:    zone_transition_requested.emit(7)
+			9:    zone_transition_requested.emit(8)
 
 
 func _try_select_star(screen_pos: Vector2) -> void:
-	if ScaleEngine.current_zone < 5:
+	if ScaleEngine.current_zone < 5 or ScaleEngine.current_zone > 6:
 		return
 	var best_i := -1
-	var best_d := 16.0   # pixel threshold for click
+	var best_d := 16.0
 	for i in NEARBY_STARS.size():
 		var s: Array = NEARBY_STARS[i]
 		var sp := _world_to_screen(Vector2(float(s[1]), -float(s[2])))

@@ -130,11 +130,17 @@ func _input(event: InputEvent) -> void:
 			KEY_F5:
 				get_tree().reload_current_scene()
 			KEY_M:
-				# Toggle: Earth ↔ Solar (zone 3) ↔ Star map (zone 5) via M
+				# M retreats one scale level: Earth ↔ Solar ↔ Near Stars ↔ Local Bubble ↔ Galactic
 				var zone := ScaleEngine.current_zone
 				if zone <= 2:
 					_do_transition(3)
 				elif zone <= 4:
 					_do_transition(1)
-				else:
+				elif zone == 5:
 					_do_transition(3)
+				elif zone == 6:
+					_do_transition(5)
+				elif zone == 7:
+					_do_transition(6)
+				else:
+					_do_transition(zone - 1)
