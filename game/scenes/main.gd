@@ -2,7 +2,7 @@ extends Node
 
 @onready var game_loop:      Node                = $GameLoop
 @onready var toolbar:        PanelContainer      = $UI/EarthView/TopBar
-@onready var budget_panel:   PanelContainer      = $UI/EarthView/RightScroll/RightPanel/BudgetPanel
+@onready var budget_panel:   PanelContainer      = $UI/EarthView/BudgetDropdown
 @onready var faction_panel:  PanelContainer      = $UI/EarthView/RightScroll/RightPanel/FactionPanel
 @onready var event_log:      Control             = $UI/EarthView/EventLog
 @onready var tech_tree_panel: Control            = $UI/TechTreePanel
@@ -27,6 +27,10 @@ func _ready() -> void:
 	toolbar.event_log_toggled.connect(func():
 		if event_log.visible: event_log.hide()
 		else: event_log.show()
+	)
+	toolbar.budget_toggled.connect(func():
+		if budget_panel.visible: budget_panel.hide()
+		else: budget_panel.show()
 	)
 
 	tech_tree_panel.research_requested.connect(_on_research_requested)

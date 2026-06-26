@@ -63,13 +63,21 @@ size_flags_horizontal = 3
 custom_minimum_size = Vector2(310, 0)
 theme_override_constants/separation = 8
 
-[node name="BudgetPanel" parent="UI/EarthView/RightScroll/RightPanel" instance=ExtResource("4")]
-layout_mode = 2
-size_flags_vertical = 0
-
 [node name="FactionPanel" parent="UI/EarthView/RightScroll/RightPanel" instance=ExtResource("8")]
 layout_mode = 2
 size_flags_vertical = 0
+
+[node name="BudgetDropdown" parent="UI/EarthView" instance=ExtResource("4")]
+layout_mode = 1
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 10.0
+offset_top = 42.0
+offset_right = 320.0
+offset_bottom = 360.0
+visible = false
 
 [node name="Minimap" type="Control" parent="UI/EarthView"]
 layout_mode = 1

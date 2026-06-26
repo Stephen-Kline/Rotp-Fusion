@@ -15,7 +15,7 @@ var _earth_root: Node3D
 var _cloud_root: Node3D
 var _city_lights: Array[Node3D] = []
 
-var _sat_orbit:  Node3D
+var _sat_orbits: Array[Node3D] = []   # grows as more satellites are built
 var _crew_orbit: Node3D
 var _stn_orbit:  Node3D
 var _moon_orbit: Node3D
@@ -33,6 +33,16 @@ var _completed:       Array = []
 var _active_research  := ""
 var _moon_mission_active := false
 var _moon_landing        := false
+
+# Satellite orbit slots — [orbital_radius, y_start_deg, z_inclination_deg, y_speed_deg_per_sec]
+# Speeds scaled by Kepler r^1.5 relative to the base LEO slot.
+const SAT_ORBIT_PARAMS: Array = [
+	[2.05, 0.0,    0.0,   48.0],   # equatorial LEO
+	[2.18, 130.0, 28.0,  -44.0],   # inclined (retrograde for visual variety)
+	[2.32, 250.0, 51.6,   40.0],   # ISS-like inclination, higher
+	[2.12,  70.0,-35.0,  -46.0],   # low inclined, retrograde
+	[2.45, 190.0, 97.0,   37.0],   # near-polar (sun-synchronous-like)
+]
 
 const LAUNCH_INTERVAL := 4.0
 const PROPULSION_NODES := [
@@ -61,17 +71,17 @@ const CITY_LATLONS: Array = [
 # [u_center, v_center, u_radius, v_radius, color]
 # UV convention: U=lon/TAU (0 = prime meridian, wrapping), V=(PI/2-lat)/PI
 const _CONTINENTS_UV: Array = [
-	[0.722, 0.250, 0.042, 0.095, Color(0.20, 0.50, 0.17)],  # N. America
-	[0.833, 0.583, 0.026, 0.095, Color(0.18, 0.48, 0.14)],  # S. America
-	[0.042, 0.211, 0.020, 0.050, Color(0.22, 0.52, 0.19)],  # Europe
-	[0.061, 0.472, 0.032, 0.110, Color(0.24, 0.50, 0.14)],  # Africa
-	[0.125, 0.361, 0.016, 0.038, Color(0.60, 0.52, 0.28)],  # Arabia (desert)
-	[0.217, 0.389, 0.014, 0.044, Color(0.20, 0.50, 0.15)],  # India
-	[0.250, 0.250, 0.065, 0.078, Color(0.20, 0.50, 0.17)],  # Asia
-	[0.294, 0.444, 0.014, 0.032, Color(0.18, 0.48, 0.14)],  # SE Asia
-	[0.383, 0.300, 0.010, 0.026, Color(0.20, 0.50, 0.17)],  # Japan
-	[0.375, 0.639, 0.026, 0.036, Color(0.20, 0.48, 0.14)],  # Australia
-	[0.883, 0.100, 0.015, 0.034, Color(0.88, 0.94, 1.00)],  # Greenland
+	[0.722, 0.250, 0.042, 0.095, Color(0.38, 0.54, 0.32)],  # N. America  (sage)
+	[0.833, 0.583, 0.026, 0.095, Color(0.36, 0.52, 0.30)],  # S. America  (sage)
+	[0.042, 0.211, 0.020, 0.050, Color(0.40, 0.56, 0.34)],  # Europe      (sage)
+	[0.061, 0.472, 0.032, 0.110, Color(0.36, 0.52, 0.28)],  # Africa      (sage)
+	[0.125, 0.361, 0.016, 0.038, Color(0.70, 0.56, 0.28)],  # Arabia      (sandy cream)
+	[0.217, 0.389, 0.014, 0.044, Color(0.38, 0.54, 0.32)],  # India       (sage)
+	[0.250, 0.250, 0.065, 0.078, Color(0.38, 0.54, 0.32)],  # Asia        (sage)
+	[0.294, 0.444, 0.014, 0.032, Color(0.36, 0.52, 0.30)],  # SE Asia     (sage)
+	[0.383, 0.300, 0.010, 0.026, Color(0.38, 0.54, 0.32)],  # Japan       (sage)
+	[0.375, 0.639, 0.026, 0.036, Color(0.36, 0.52, 0.30)],  # Australia   (sage)
+	[0.883, 0.100, 0.015, 0.034, Color(0.94, 0.90, 0.80)],  # Greenland   (cream)
 ]
 
 
@@ -138,9 +148,9 @@ func _build_earth() -> void:
 		var pos := _ll(ll[0], ll[1], EARTH_R + 0.035)
 		var m := _make_sphere(0.038, 6, 4)
 		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(1.0, 0.88, 0.3)
+		mat.albedo_color = Color(0.95, 0.58, 0.12)
 		mat.emission_enabled = true
-		mat.emission = Color(1.0, 0.75, 0.2)
+		mat.emission = Color(0.92, 0.46, 0.06)
 		mat.emission_energy_multiplier = 4.0
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		m.surface_set_material(0, mat)
@@ -153,7 +163,7 @@ func _build_earth() -> void:
 	# Cloud sphere
 	var m_cloud := _make_sphere(CLOUD_R, 48, 24)
 	var mat_cloud := StandardMaterial3D.new()
-	mat_cloud.albedo_color = Color(1.0, 1.0, 1.0, 0.22)
+	mat_cloud.albedo_color = Color(0.94, 0.90, 0.80, 0.22)
 	mat_cloud.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat_cloud.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat_cloud.roughness = 1.0
@@ -163,7 +173,7 @@ func _build_earth() -> void:
 	# Atmosphere rim
 	var m_atmo := _make_sphere(ATMO_R, 32, 16)
 	var mat_atmo := StandardMaterial3D.new()
-	mat_atmo.albedo_color = Color(0.28, 0.52, 1.0, 0.07)
+	mat_atmo.albedo_color = Color(0.20, 0.65, 0.85, 0.09)
 	mat_atmo.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat_atmo.cull_mode = BaseMaterial3D.CULL_DISABLED
 	m_atmo.surface_set_material(0, mat_atmo)
@@ -171,11 +181,15 @@ func _build_earth() -> void:
 
 
 func _build_orbital_objects(vp: Node) -> void:
-	_sat_orbit = _orbit_pivot(vp, 0.0, false)
-	var sat_arm := Node3D.new()
-	sat_arm.position = Vector3(ORBIT_SAT, 0.0, 0.0)
-	_sat_orbit.add_child(sat_arm)
-	_add_satellite(sat_arm)
+	for i in SAT_ORBIT_PARAMS.size():
+		var p: Array   = SAT_ORBIT_PARAMS[i]
+		var pivot := _orbit_pivot(vp, p[1], false)
+		pivot.rotation_degrees.z = p[2]
+		var arm := Node3D.new()
+		arm.position = Vector3(p[0], 0.0, 0.0)
+		pivot.add_child(arm)
+		_add_satellite(arm)
+		_sat_orbits.append(pivot)
 
 	_crew_orbit = _orbit_pivot(vp, 55.0, false)
 	_crew_orbit.rotation_degrees.z = 12.0
@@ -207,7 +221,7 @@ func _build_orbital_objects(vp: Node) -> void:
 	var m_flag := BoxMesh.new()
 	m_flag.size = Vector3(0.05, 0.09, 0.01)
 	var mat_flag := StandardMaterial3D.new()
-	mat_flag.albedo_color = Color(1.0, 0.15, 0.15)
+	mat_flag.albedo_color = Color(0.92, 0.48, 0.12)  # orange
 	mat_flag.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m_flag.surface_set_material(0, mat_flag)
 	_flag_node = _inst(m_flag)
@@ -221,9 +235,9 @@ func _build_orbital_objects(vp: Node) -> void:
 	vp.add_child(_transit_craft)
 	var m_craft := _make_sphere(0.065, 8, 6)
 	var mat_craft := StandardMaterial3D.new()
-	mat_craft.albedo_color = Color(1.0, 0.90, 0.60)
+	mat_craft.albedo_color = Color(0.92, 0.55, 0.12)  # orange
 	mat_craft.emission_enabled = true
-	mat_craft.emission = Color(1.0, 0.85, 0.5)
+	mat_craft.emission = Color(0.92, 0.48, 0.08)
 	mat_craft.emission_energy_multiplier = 2.0
 	m_craft.surface_set_material(0, mat_craft)
 	_transit_craft.add_child(_inst(m_craft))
@@ -244,7 +258,7 @@ func _build_distance_rings(vp: Node) -> void:
 		var radius: float = r_data[0]
 		var label: String = r_data[1]
 		var alpha: float  = r_data[2]
-		_ring(ring_root, radius, Color(1.0, 1.0, 1.0, alpha), label)
+		_ring(ring_root, radius, Color(0.94, 0.90, 0.80, alpha), label)
 
 
 func _ring(parent: Node3D, radius: float, col: Color, label: String) -> void:
@@ -303,19 +317,33 @@ func _ring(parent: Node3D, radius: float, col: Color, label: String) -> void:
 
 
 func _add_satellite(parent: Node3D) -> void:
-	var m := BoxMesh.new()
-	m.size = Vector3(0.14, 0.06, 0.06)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.25, 0.35, 0.80)
-	mat.metallic = 0.5
-	m.surface_set_material(0, mat)
-	parent.add_child(_inst(m))
+	# Body
+	var body_mat := StandardMaterial3D.new()
+	body_mat.albedo_color = Color(0.82, 0.78, 0.66)  # cream
+	body_mat.metallic = 0.6
+	var body := BoxMesh.new()
+	body.size = Vector3(0.045, 0.022, 0.022)
+	body.surface_set_material(0, body_mat)
+	parent.add_child(_inst(body))
+
+	# Solar panels — two flat wings extending along X
+	var panel_mat := StandardMaterial3D.new()
+	panel_mat.albedo_color = Color(0.08, 0.28, 0.48)  # dark navy-blue
+	panel_mat.metallic = 0.5
+	panel_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for side: int in [-1, 1]:
+		var panel := BoxMesh.new()
+		panel.size = Vector3(0.055, 0.006, 0.032)
+		panel.surface_set_material(0, panel_mat)
+		var pi := _inst(panel)
+		pi.position = Vector3(float(side) * 0.052, 0.0, 0.0)
+		parent.add_child(pi)
 
 
 func _add_capsule(parent: Node3D) -> void:
 	var m := _make_sphere(0.07, 8, 6)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.85, 0.85, 0.90)
+	mat.albedo_color = Color(0.88, 0.84, 0.72)  # cream
 	mat.metallic = 0.3
 	m.surface_set_material(0, mat)
 	parent.add_child(_inst(m))
@@ -325,7 +353,7 @@ func _add_station(parent: Node3D) -> void:
 	var m := BoxMesh.new()
 	m.size = Vector3(0.40, 0.06, 0.06)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.70, 0.78, 0.95)
+	mat.albedo_color = Color(0.80, 0.76, 0.64)  # cream
 	mat.metallic = 0.4
 	m.surface_set_material(0, mat)
 	parent.add_child(_inst(m))
@@ -344,7 +372,7 @@ func _orbit_pivot(parent: Node, y_deg: float, visible: bool) -> Node3D:
 func _generate_earth_texture() -> ImageTexture:
 	var W := 512; var H := 256
 	var img := Image.create(W, H, false, Image.FORMAT_RGB8)
-	var ocean := Color(0.02, 0.14, 0.88)
+	var ocean := Color(0.08, 0.16, 0.38)  # deep navy
 	img.fill(ocean)
 
 	for c: Array in _CONTINENTS_UV:
@@ -354,17 +382,17 @@ func _generate_earth_texture() -> ImageTexture:
 	for py in H:
 		var v := float(py) / H
 		if v < 0.065:
-			for px in W: img.set_pixel(px, py, Color(0.88, 0.94, 1.0))
+			for px in W: img.set_pixel(px, py, Color(0.94, 0.90, 0.80))
 		elif v < 0.095:
 			var t := (v - 0.065) / 0.03
 			for px in W:
-				img.set_pixel(px, py, img.get_pixel(px, py).lerp(Color(0.88, 0.94, 1.0), 1.0 - t))
+				img.set_pixel(px, py, img.get_pixel(px, py).lerp(Color(0.94, 0.90, 0.80), 1.0 - t))
 		elif v > 0.935:
-			for px in W: img.set_pixel(px, py, Color(0.88, 0.94, 1.0))
+			for px in W: img.set_pixel(px, py, Color(0.94, 0.90, 0.80))
 		elif v > 0.905:
 			var t := (v - 0.905) / 0.03
 			for px in W:
-				img.set_pixel(px, py, img.get_pixel(px, py).lerp(Color(0.88, 0.94, 1.0), t))
+				img.set_pixel(px, py, img.get_pixel(px, py).lerp(Color(0.94, 0.90, 0.80), t))
 
 	# Subtle per-pixel noise for texture variation
 	for py in H:
@@ -382,10 +410,10 @@ func _generate_earth_texture() -> ImageTexture:
 func _generate_moon_texture() -> ImageTexture:
 	var W := 256; var H := 128
 	var img := Image.create(W, H, false, Image.FORMAT_RGB8)
-	img.fill(Color(0.68, 0.68, 0.68))
+	img.fill(Color(0.82, 0.78, 0.66))  # warm cream-gray base
 
-	# Maria (dark plains) as large dark ellipses
-	var mare := Color(0.44, 0.44, 0.44)
+	# Maria (dark plains)
+	var mare := Color(0.54, 0.50, 0.40)
 	_fill_ellipse(img, 0.35, 0.40, 0.12, 0.14, mare)
 	_fill_ellipse(img, 0.60, 0.45, 0.09, 0.10, mare)
 	_fill_ellipse(img, 0.20, 0.55, 0.07, 0.08, mare)
@@ -398,8 +426,8 @@ func _generate_moon_texture() -> ImageTexture:
 		[0.15, 0.35, 0.025],[0.82, 0.58, 0.025],[0.50, 0.70, 0.03],
 	]
 	for cr: Array in craters:
-		_fill_ellipse(img, cr[0], cr[1], cr[2], cr[2], Color(0.72, 0.72, 0.72))
-		_fill_ellipse(img, cr[0], cr[1], cr[2] * 0.7, cr[2] * 0.7, Color(0.35, 0.35, 0.35))
+		_fill_ellipse(img, cr[0], cr[1], cr[2], cr[2], Color(0.88, 0.84, 0.72))
+		_fill_ellipse(img, cr[0], cr[1], cr[2] * 0.7, cr[2] * 0.7, Color(0.44, 0.40, 0.34))
 
 	# Noise
 	for py in H:
@@ -446,9 +474,11 @@ func update_state(state: SimulationState) -> void:
 	for i in _city_lights.size():
 		_city_lights[i].visible = i < visible_cities
 
-	if _sat_orbit:  _sat_orbit.visible  = "orbital_satellite" in _completed
-	if _crew_orbit: _crew_orbit.visible = "crewed_orbit"       in _completed
-	if _stn_orbit:  _stn_orbit.visible  = "modular_station"    in _completed
+	var n_sats := _satellite_count()
+	for i in _sat_orbits.size():
+		_sat_orbits[i].visible = i < n_sats
+	if _crew_orbit: _crew_orbit.visible = "crewed_orbit"    in _completed
+	if _stn_orbit:  _stn_orbit.visible  = "modular_station" in _completed
 
 	if _moon_mat:
 		if _moon_landing:
@@ -465,6 +495,16 @@ func update_state(state: SimulationState) -> void:
 	if _transit_craft: _transit_craft.visible = _moon_mission_active and not _moon_landing
 
 
+func _satellite_count() -> int:
+	if not "orbital_satellite" in _completed: return 0
+	# Each subsequent milestone unlocks another satellite slot
+	var unlocks := ["long_duration_crewed", "modular_station", "expanded_station", "lunar_transit"]
+	var n := 1
+	for m in unlocks:
+		if m in _completed: n += 1
+	return mini(n, SAT_ORBIT_PARAMS.size())
+
+
 # ── Animation ─────────────────────────────────────────────────────────────────
 
 func _process(delta: float) -> void:
@@ -472,7 +512,9 @@ func _process(delta: float) -> void:
 
 	if _earth_root: _earth_root.rotation_degrees.y += delta * 3.0
 	if _cloud_root: _cloud_root.rotation_degrees.y += delta * 4.0
-	if _sat_orbit:  _sat_orbit.rotation_degrees.y  += delta * 48.0
+	for i in _sat_orbits.size():
+		if _sat_orbits[i].visible:
+			_sat_orbits[i].rotation_degrees.y += delta * (SAT_ORBIT_PARAMS[i] as Array)[3]
 	if _crew_orbit: _crew_orbit.rotation_degrees.y -= delta * 38.0
 	if _stn_orbit:  _stn_orbit.rotation_degrees.y  += delta * 22.0
 	if _moon_orbit: _moon_orbit.rotation_degrees.y += delta * 2.8
@@ -503,18 +545,21 @@ func _process(delta: float) -> void:
 
 
 func _spawn_rocket() -> void:
+	# Near-equatorial launch — most launches stay close to equator for orbital efficiency.
+	# The apex is on the equatorial plane at orbital altitude so the trajectory arcs
+	# toward the orbital plane (gravity-turn visual).
 	var lon := randf() * TAU
-	var lat := randf_range(-0.4, 0.4)
+	var lat := randf_range(-0.15, 0.15)
 	var surface := _ll(lat, lon, EARTH_R + 0.06)
-	var apex    := _ll(lat, lon, EARTH_R + 1.3)
+	var apex    := Vector3(cos(lon) * (EARTH_R + 1.15), 0.0, sin(lon) * (EARTH_R + 1.15))
 
 	var m := CylinderMesh.new()
 	m.top_radius = 0.018; m.bottom_radius = 0.035; m.height = 0.15
 	m.radial_segments = 6
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(1.0, 0.60, 0.12)
+	mat.albedo_color = Color(0.92, 0.48, 0.12)  # burnt orange
 	mat.emission_enabled = true
-	mat.emission = Color(1.0, 0.50, 0.05)
+	mat.emission = Color(0.88, 0.36, 0.04)
 	mat.emission_energy_multiplier = 3.0
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.surface_set_material(0, mat)

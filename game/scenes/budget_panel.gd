@@ -30,6 +30,10 @@ var _updating: bool = false
 
 
 func _ready() -> void:
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(0.06, 0.10, 0.22)
+	add_theme_stylebox_override("panel", bg)
+
 	_energy_slider.value_changed.connect(_on_slider_changed.bind("energy"))
 	_food_slider.value_changed.connect(_on_slider_changed.bind("food"))
 	_education_slider.value_changed.connect(_on_slider_changed.bind("education"))

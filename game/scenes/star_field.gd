@@ -31,9 +31,9 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var sz := get_size()
-	draw_rect(Rect2(Vector2.ZERO, sz), Color(0.02, 0.02, 0.06))
+	draw_rect(Rect2(Vector2.ZERO, sz), Color(0.04, 0.06, 0.16))
 	for s in _stars:
 		var twinkle := sin(_time * s["twinkle_speed"] + s["phase"]) * 0.2
 		var alpha: float = clampf(s["base_alpha"] + twinkle, 0.1, 1.0)
 		var pos := Vector2(s["pos"].x * sz.x, s["pos"].y * sz.y)
-		draw_circle(pos, s["size"], Color(0.9, 0.92, 1.0, alpha))
+		draw_circle(pos, s["size"], Color(0.94, 0.90, 0.80, alpha))
