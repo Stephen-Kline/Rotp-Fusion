@@ -90,17 +90,91 @@ func _apply_action(s: SimulationState, action: PlayerAction) -> void:
 						f.satisfaction = f._cur_satisfaction
 					break
 		PlayerAction.Type.LAUNCH_MOON_MISSION:
-			var prereqs_met: bool = (
-				"crewed_lunar_vehicle" in s.completed_research
-				and s.milestone_flags.get("lunar_probe_complete", false)
-				and not s.moon_mission_active
-				and not s.milestone_flags.get("moon_landing", false)
-			)
-			if prereqs_met:
-				s.moon_mission_active = true
-				s.moon_mission_progress = 0.0
-				var duration := 2.0 / maxf(s.construction_speed, 0.001)
-				s.moon_mission_duration = clampf(duration, 0.5, 9999.0)
+			pass  # deprecated — superseded by BUILD_SHIP + LAUNCH_SHIP
+
+		PlayerAction.Type.BUILD_STRUCTURE:
+			var p := action.payload
+			var body: String = p.get("body", "earth")
+			var struct_type: String = p.get("structure_type", "")
+			if struct_type.is_empty() or struct_type not in s.available_build_options:
+				return
+			var cost: Dictionary = Constants.STRUCTURE_COSTS.get(struct_type, {})
+			var mat_cost: float = float(cost.get("materials", 0.0))
+			var energy_cost: float = float(cost.get("energy", 0.0))
+			if s.materials_stockpile < mat_cost or s.energy_stockpile < energy_cost:
+				return
+			s.materials_stockpile -= mat_cost
+			s.energy_stockpile -= energy_cost
+			if not s.structures.has(body):
+				s.structures[body] = []
+			if struct_type not in s.structures[body]:
+				s.structures[body].append(struct_type)
+			s.available_build_options.erase(struct_type)
+
+		PlayerAction.Type.BUILD_SHIP:
+			var p := action.payload
+			var build_option: String = p.get("build_option", "")
+			var origin: String = p.get("origin", "earth")
+			if build_option.is_empty() or build_option not in s.available_build_options:
+				return
+			var origin_structs: Array = s.structures.get(origin, [])
+			if "launch_facility" not in origin_structs \
+					and "space_launch_facility" not in origin_structs:
+				return
+			var cost: Dictionary = Constants.SHIP_BUILD_COSTS.get(build_option, {})
+			var mat_cost: float = float(cost.get("materials", 0.0))
+			var energy_cost: float = float(cost.get("energy", 0.0))
+			var build_yr: float = float(cost.get("build_years", 1.0))
+			if s.materials_stockpile < mat_cost or s.energy_stockpile < energy_cost:
+				return
+			s.materials_stockpile -= mat_cost
+			s.energy_stockpile -= energy_cost
+			var ship := Ship.new()
+			ship.id = "ship_%s_%05d" % [build_option, int(s.year * 1000) % 100000]
+			ship.label = _ship_label(build_option)
+			ship.role = _ship_role(build_option)
+			ship.origin_body = origin
+			ship.propulsion_tier = PropulsionData.best_tier(s.completed_research)
+			ship.ship_state = Ship.ShipState.BUILDING
+			ship.build_complete_year = s.year + build_yr / maxf(s.construction_speed, 0.001)
+			s.ships.append(ship)
+
+		PlayerAction.Type.LAUNCH_SHIP:
+			var p := action.payload
+			var ship_id: String = p.get("ship_id", "")
+			var destination: String = p.get("destination", "")
+			var use_direct: bool = bool(p.get("use_direct", false))
+			for ship in s.ships:
+				if ship.id != ship_id:
+					continue
+				if ship.ship_state != Ship.ShipState.AWAITING_WINDOW \
+						and ship.ship_state != Ship.ShipState.ORBITING:
+					break
+				if not destination.is_empty():
+					ship.destination_body = destination
+				if ship.destination_body.is_empty():
+					break
+				var tier := ship.propulsion_tier
+				var direct_ok := use_direct \
+					and PropulsionData.is_direct_unlocked(s.completed_research)
+				var prof := FlightPlanner.plan(
+					ship.origin_body, ship.destination_body, s.year, tier, direct_ok)
+				ship.trajectory_type = (
+					Ship.TrajectoryType.FOLDING if tier == PropulsionData.Tier.FOLDING
+					else (Ship.TrajectoryType.DIRECT if direct_ok
+					else Ship.TrajectoryType.HOHMANN)
+				)
+				ship.mission_authorized_year = s.year
+				if direct_ok:
+					ship.departure_year = prof.direct_arrival_year - prof.direct_transit_years
+					ship.arrival_year = prof.direct_arrival_year
+					s.energy_stockpile = maxf(0.0,
+						s.energy_stockpile - Constants.DIRECT_LAUNCH_ENERGY_COST)
+				else:
+					ship.departure_year = prof.departure_year
+					ship.arrival_year = prof.arrival_year
+				ship.ship_state = Ship.ShipState.IN_TRANSIT
+				break
 
 
 func tick(state: SimulationState, delta_years: float) -> TickResult:
@@ -112,7 +186,7 @@ func tick(state: SimulationState, delta_years: float) -> TickResult:
 	_compute_resources(next, delta_years)
 	_tick_research(next, delta_years, result)
 	_check_leo_milestones(next, result)
-	_tick_moon_mission(next, delta_years, result)
+	_tick_ships(next, result)
 	_compute_factions(next, delta_years, result)
 	_check_gsa_preconditions(next, result)
 
@@ -219,13 +293,69 @@ func _check_leo_milestones(s: SimulationState, result: TickResult) -> void:
 			s.milestone_flags[flag] = true
 
 
-func _tick_moon_mission(s: SimulationState, delta_years: float, result: TickResult) -> void:
-	if s.moon_mission_active and not s.milestone_flags.get("moon_landing", false):
-		s.moon_mission_progress += delta_years
-		if s.moon_mission_progress >= s.moon_mission_duration:
-			s.moon_mission_active = false
-			s.milestone_flags["moon_landing"] = true
-			result.add_event("moon_landing", "Humanity has landed on the Moon. A new era begins.", EventSystem.Priority.CRITICAL, "MILESTONE")
+func _tick_ships(s: SimulationState, result: TickResult) -> void:
+	for ship in s.ships:
+		match ship.ship_state:
+			Ship.ShipState.BUILDING:
+				if s.year >= ship.build_complete_year:
+					ship.ship_state = Ship.ShipState.AWAITING_WINDOW
+					result.add_event(
+						"ship_built_%s" % ship.id,
+						"%s is ready for launch." % ship.label,
+						EventSystem.Priority.MEDIUM, "MISSION"
+					)
+			Ship.ShipState.IN_TRANSIT:
+				if s.year >= ship.arrival_year:
+					ship.ship_state = Ship.ShipState.ARRIVED
+					_on_ship_arrived(s, ship, result)
+
+
+func _on_ship_arrived(s: SimulationState, ship: Ship, result: TickResult) -> void:
+	match ship.destination_body:
+		"moon":
+			match ship.role:
+				Ship.Role.MISSION_SPECIFIC:
+					if not s.milestone_flags.get("moon_landing", false):
+						s.milestone_flags["moon_landing"] = true
+						result.add_event(
+							"moon_landing",
+							"Humanity has landed on the Moon. A new era begins.",
+							EventSystem.Priority.CRITICAL, "MILESTONE"
+						)
+				Ship.Role.PROBE:
+					if not s.milestone_flags.get("lunar_probe_complete", false):
+						s.milestone_flags["lunar_probe_complete"] = true
+						result.add_event(
+							"lunar_probe_complete",
+							"The lunar probe reaches the Moon. Survey data received.",
+							EventSystem.Priority.HIGH, "SCIENCE"
+						)
+		_:
+			result.add_event(
+				"ship_arrived_%s" % ship.id,
+				"%s has arrived at %s." % [ship.label, ship.destination_body],
+				EventSystem.Priority.MEDIUM, "MISSION"
+			)
+
+
+func _ship_role(build_option: String) -> int:
+	match build_option:
+		"crewed_lunar_lander", "crewed_mars_lander":
+			return Ship.Role.MISSION_SPECIFIC
+		"lunar_transit_vehicle":
+			return Ship.Role.PROBE
+		"satellite":
+			return Ship.Role.PROBE
+		_:
+			return Ship.Role.PROBE
+
+
+func _ship_label(build_option: String) -> String:
+	match build_option:
+		"crewed_lunar_lander":    return "Crewed Lunar Lander"
+		"lunar_transit_vehicle":  return "Lunar Transit Vehicle"
+		"satellite":              return "Communications Satellite"
+		_: return build_option.replace("_", " ").capitalize()
 
 
 func _apply_unlock_payload(s: SimulationState, node: TechNode) -> void:

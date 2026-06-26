@@ -190,5 +190,46 @@
     "unlock_payload": { "milestones": ["seti_array"], "build_options": [] },
     "kardashev_tier": 1,
     "description": "A coordinated array of radio telescopes scanning for signs of extraterrestrial intelligence."
+  },
+  {
+    "id": "advanced_navigation",
+    "display_name": "Advanced Navigation Systems",
+    "category": "Computing",
+    "prerequisites": ["satellite_comms", "lunar_transit"],
+    "research_cost": 22.0,
+    "unlock_payload": { "milestones": ["advanced_navigation"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.05} },
+    "kardashev_tier": 1,
+    "description": "Deep-space navigation using pulsars, stellar interferometry, and onboard AI. Required for direct-trajectory burns when paired with fusion drives."
+  },
+  {
+    "id": "nuclear_thermal_drive",
+    "display_name": "Nuclear Thermal Drive",
+    "category": "Propulsion",
+    "prerequisites": ["crewed_lunar_vehicle", "advanced_fission"],
+    "required_milestones": ["moon_landing"],
+    "research_cost": 45.0,
+    "unlock_payload": { "milestones": ["nuclear_thermal_drive"], "build_options": ["space_launch_facility"] },
+    "kardashev_tier": 1,
+    "description": "Reactor-heated propellant achieving 25 km/s exhaust velocity. Halves transit times and unlocks the Space Launch Facility upgrade."
+  },
+  {
+    "id": "ion_drive",
+    "display_name": "Ion Propulsion",
+    "category": "Propulsion",
+    "prerequisites": ["nuclear_thermal_drive", "advanced_materials"],
+    "research_cost": 60.0,
+    "unlock_payload": { "milestones": ["ion_drive"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "Electrically accelerated ions providing 100 km/s effective speed over long burns. Transforms interplanetary travel into routine operations."
+  },
+  {
+    "id": "fusion_drive",
+    "display_name": "Fusion Drive",
+    "category": "Propulsion",
+    "prerequisites": ["ion_drive", "advanced_fission"],
+    "research_cost": 120.0,
+    "unlock_payload": { "milestones": ["fusion_drive"], "build_options": [] },
+    "kardashev_tier": 1,
+    "description": "Controlled fusion providing 1 000 km/s thrust. When paired with Advanced Navigation, enables direct point-to-point trajectories — no launch windows required."
   }
 ]

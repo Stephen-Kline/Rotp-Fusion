@@ -86,10 +86,44 @@ var construction_speed_bonus: float = 0.0
 
 var founding_principles: Array[String] = []
 
-# Moon mission
-var moon_mission_active: bool = false
-var moon_mission_progress: float = 0.0
-var moon_mission_duration: float = 0.0
+# Ships in the fleet (probes, transports, military, mission-specific)
+var ships: Array = []           # Array[Ship]
+
+# Orbital units placed at bodies (satellites, stations, depots, platforms)
+var orbital_units: Array = []   # Array[OrbitalUnit]
+
+# Structures built on bodies: body_id -> Array[String] of structure type IDs
+var structures: Dictionary = {}
+
+# Backward-compatible derived properties for existing UI (orbital_layer, moon_mission_panel).
+# These are computed from the ships array rather than stored separately.
+var moon_mission_active: bool:
+	get:
+		for ship in ships:
+			if ship.destination_body == "moon" \
+					and ship.role == Ship.Role.MISSION_SPECIFIC \
+					and ship.ship_state in [Ship.ShipState.IN_TRANSIT,
+					Ship.ShipState.AWAITING_WINDOW]:
+				return true
+		return false
+
+var moon_mission_progress: float:
+	get:
+		for ship in ships:
+			if ship.destination_body == "moon" \
+					and ship.role == Ship.Role.MISSION_SPECIFIC \
+					and ship.ship_state == Ship.ShipState.IN_TRANSIT:
+				return maxf(0.0, year - ship.mission_authorized_year)
+		return 0.0
+
+var moon_mission_duration: float:
+	get:
+		for ship in ships:
+			if ship.destination_body == "moon" \
+					and ship.role == Ship.Role.MISSION_SPECIFIC \
+					and ship.ship_state == Ship.ShipState.IN_TRANSIT:
+				return maxf(0.001, ship.arrival_year - ship.mission_authorized_year)
+		return 1.0
 
 
 func _init() -> void:
@@ -156,7 +190,11 @@ func duplicate_state() -> SimulationState:
 	s.research_rate_bonus    = research_rate_bonus
 	s.construction_speed_bonus = construction_speed_bonus
 	s.founding_principles    = founding_principles.duplicate()
-	s.moon_mission_active    = moon_mission_active
-	s.moon_mission_progress  = moon_mission_progress
-	s.moon_mission_duration  = moon_mission_duration
+	s.ships = []
+	for ship in ships:
+		s.ships.append(ship.duplicate())
+	s.orbital_units = []
+	for unit in orbital_units:
+		s.orbital_units.append(unit.duplicate())
+	s.structures = structures.duplicate(true)
 	return s
