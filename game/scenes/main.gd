@@ -90,6 +90,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	var m_now := Input.is_key_pressed(KEY_M)
 	if m_now and not _m_prev:
+		print("[main] M pressed — zone:", ScaleEngine.current_zone)
 		_handle_map_key()
 	_m_prev = m_now
 

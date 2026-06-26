@@ -38,8 +38,6 @@ var _moon_landing        := false
 var _cam: Camera3D = null
 var _look_at: Vector3 = Vector3.ZERO
 var _cam_offset: Vector3 = Vector3(0.0, 3.2, 6.0)   # default viewing angle
-var _dragging: bool = false
-var _drag_origin: Vector2 = Vector2.ZERO
 
 const _CAM_DIST_MIN := 2.5
 const _CAM_DIST_MAX := 18.0
@@ -630,8 +628,12 @@ func _on_zone_changed(zone: int) -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMagnifyGesture:
-		# Trackpad pinch: factor > 1 = fingers spreading apart = zoom in
+		# Trackpad pinch: factor > 1 = spreading = zoom in
 		_zoom_by(1.0 / event.factor)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventPanGesture:
+		# Two-finger drag on trackpad
+		_pan(event.delta * 6.0)
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton:
 		match event.button_index:
@@ -643,15 +645,12 @@ func _gui_input(event: InputEvent) -> void:
 				if event.pressed:
 					_zoom_by(1.15)
 					get_viewport().set_input_as_handled()
-			MOUSE_BUTTON_LEFT:
-				_dragging = event.pressed
-				_drag_origin = event.position
 			MOUSE_BUTTON_RIGHT:
 				if event.pressed:
 					_reset_camera()
-	elif event is InputEventMouseMotion and _dragging:
-		_pan(event.position - _drag_origin)
-		_drag_origin = event.position
+	elif event is InputEventMouseMotion:
+		# Pan on any mouse motion over the view (no click required)
+		_pan(event.relative)
 
 
 func _zoom_by(factor: float) -> void:

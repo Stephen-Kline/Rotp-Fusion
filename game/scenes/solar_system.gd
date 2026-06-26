@@ -580,7 +580,7 @@ func _gui_input(event: InputEvent) -> void:
 						_try_select_planet(event.position)
 					_dragging = false
 	elif event is InputEventMouseMotion and _dragging:
-		var delta := event.position - _drag_origin
+		var delta := (event as InputEventMouseMotion).position - _drag_origin
 		if delta.length() > 4.0:
 			_did_drag = true
 		_pan = _pan_origin - delta / (_ppu * _zoom)
