@@ -356,7 +356,7 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 				vbox.add_child(direct_btn)
 
 		Ship.ShipState.IN_TRANSIT:
-			var dest_name := DEST_LABELS.get(ship.destination_body,
+			var dest_name: String = DEST_LABELS.get(ship.destination_body,
 				ship.destination_body.capitalize())
 			status_lbl.text = "→ %s" % dest_name
 			status_lbl.add_theme_color_override("font_color", _CYAN)
@@ -379,7 +379,7 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			refs["eta"] = eta
 
 		Ship.ShipState.ARRIVED:
-			var dest_name := DEST_LABELS.get(ship.destination_body,
+			var dest_name: String = DEST_LABELS.get(ship.destination_body,
 				ship.destination_body.capitalize())
 			status_lbl.text = "Arrived"
 			status_lbl.add_theme_color_override("font_color", _GREEN)

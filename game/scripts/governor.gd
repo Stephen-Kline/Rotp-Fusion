@@ -155,7 +155,7 @@ func _apply_action(s: SimulationState, action: PlayerAction) -> void:
 					ship.destination_body = destination
 				if ship.destination_body.is_empty():
 					break
-				var tier := ship.propulsion_tier
+				var tier: int = ship.propulsion_tier
 				var direct_ok := use_direct \
 					and PropulsionData.is_direct_unlocked(s.completed_research)
 				var prof := FlightPlanner.plan(
