@@ -570,10 +570,14 @@ func _gui_input(event: InputEvent) -> void:
 					_zoom_at(event.position, 1.0 / 1.15)
 			MOUSE_BUTTON_LEFT:
 				if event.pressed:
-					_dragging = true
-					_did_drag = false
-					_drag_origin = event.position
-					_pan_origin  = _pan
+					if event.double_click:
+						_dragging = false
+						_try_double_click(event.position)
+					else:
+						_dragging = true
+						_did_drag = false
+						_drag_origin = event.position
+						_pan_origin  = _pan
 				else:
 					if not _did_drag:
 						_try_select_star(event.position)
@@ -655,6 +659,35 @@ func _try_select_planet(screen_pos: Vector2) -> void:
 		return
 	_focused_planet = "" if best_name == _focused_planet else best_name
 	queue_redraw()
+
+
+func _try_double_click(screen_pos: Vector2) -> void:
+	var zone := ScaleEngine.current_zone
+	if zone < 3 or zone > 5:
+		return
+	# Sun
+	if screen_pos.distance_to(_world_to_screen(Vector2.ZERO)) < 22.0:
+		if zone > 3:
+			zone_transition_requested.emit(3)
+		return
+	# Planets
+	for p: Array in PLANETS:
+		var pname:  String = p[0]
+		var a:      float  = float(p[1])
+		var period: float  = float(p[2])
+		var ang0:   float  = float(p[3])
+		var angle := deg_to_rad(ang0 + (360.0 / period) * (_game_year - 1950.0))
+		var sp := _world_to_screen(Vector2(cos(angle), -sin(angle)) * a)
+		if screen_pos.distance_to(sp) < 20.0:
+			if pname == "Earth":
+				zone_transition_requested.emit(1)
+			else:
+				# No dedicated local view yet — pan and zoom to planet
+				_pan = Vector2(cos(angle), -sin(angle)) * a
+				_zoom = clampf(_zoom * 3.0, 0.1, 30.0)
+				_push_parallax()
+				queue_redraw()
+			return
 
 
 func _push_parallax() -> void:

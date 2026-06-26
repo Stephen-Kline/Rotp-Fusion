@@ -647,7 +647,10 @@ func _gui_input(event: InputEvent) -> void:
 					_zoom_by(1.15)
 					get_viewport().set_input_as_handled()
 			MOUSE_BUTTON_LEFT:
-				_dragging = event.pressed
+				if event.pressed and event.double_click:
+					_try_focus_body(event.position)
+				else:
+					_dragging = event.pressed
 			MOUSE_BUTTON_RIGHT:
 				if event.pressed:
 					_reset_camera()
@@ -683,6 +686,34 @@ func _pan(delta_px: Vector2) -> void:
 
 func _reset_camera() -> void:
 	_on_zone_changed(ScaleEngine.current_zone)
+
+
+func _try_focus_body(container_pos: Vector2) -> void:
+	if not _cam:
+		return
+	# Convert container-local position → SubViewport pixel space
+	var vp_size := Vector2(_cam.get_viewport().size)
+	var vp_pos  := container_pos * vp_size / size
+
+	var dist := _cam_offset.length()
+	var dir  := _cam_offset.normalized()
+
+	# Earth (at world origin)
+	var earth_sp := _cam.unproject_position(Vector3.ZERO)
+	if vp_pos.distance_to(earth_sp) < 80.0:
+		_look_at    = Vector3.ZERO
+		_cam_offset = dir * clampf(dist * 0.4, _CAM_DIST_MIN, 4.0)
+		_update_camera()
+		return
+
+	# Moon
+	if _moon_mesh:
+		var moon_world := _moon_mesh.global_position
+		var moon_sp    := _cam.unproject_position(moon_world)
+		if vp_pos.distance_to(moon_sp) < 50.0:
+			_look_at    = Vector3(moon_world.x, 0.0, moon_world.z)
+			_cam_offset = dir * clampf(dist * 0.35, _CAM_DIST_MIN, 3.0)
+			_update_camera()
 
 
 func _update_camera() -> void:
