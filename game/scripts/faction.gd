@@ -8,7 +8,7 @@ var ideological_type: String = ""  # technocrat/industrialist/environmentalist/i
 var preferred_pillar: String = ""  # food/education/industry/energy
 var satisfaction: float = 50.0    # 0–100
 var weight: float = 0.0           # 0–1, how much political capital this faction generates
-var dissatisfied_years: int = 0   # consecutive years below crisis threshold (20)
+var dissatisfied_years: float = 0.0  # accumulated years below crisis threshold
 
 # Tracks last two satisfaction readings for trend arrow
 var _prev_satisfaction: float = 50.0

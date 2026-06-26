@@ -21,6 +21,8 @@ const CRITICAL_FLOOR := 0.15
 
 const ENERGY_LOW_THRESHOLD := 0.3  # legacy: below this, display shows warning
 
+const _RH = preload("res://scripts/resource_helpers.gd")
+
 var _tech_db: TechTreeDB
 
 class TickResult:
@@ -105,7 +107,7 @@ func tick(state: SimulationState, delta_years: float) -> TickResult:
 	var next := state.duplicate_state()
 	var result := TickResult.new(next)
 
-	next.year = state.year + int(delta_years)
+	next.year = state.year + delta_years
 
 	_compute_resources(next, delta_years)
 	_tick_research(next, delta_years, result)
@@ -165,6 +167,11 @@ func _compute_resources(s: SimulationState, delta_years: float) -> void:
 	# ~1M people need ~7.3e11 kcal/year (2000 kcal/day)
 	var pop_target := s.consumables_rate / 7.3e11
 	s.population_units = lerpf(s.population_units, pop_target, 0.1 * delta_years)
+
+	# Kardashev level: 60% energy, 40% knowledge blend
+	var k_e := _RH.k_from_energy(s.energy_rate)
+	var k_k := _RH.k_from_knowledge(s.knowledge_rate)
+	s.kardashev_level = clampf(0.60 * k_e + 0.40 * k_k, 0.0, 3.0)
 
 
 func _tick_research(s: SimulationState, delta_years: float, result: TickResult) -> void:
@@ -274,11 +281,11 @@ func _compute_factions(s: SimulationState, delta_years: float, result: TickResul
 		f.satisfaction = f._cur_satisfaction
 
 		if f.satisfaction < CRISIS_THRESHOLD:
-			f.dissatisfied_years += int(delta_years)
+			f.dissatisfied_years += delta_years
 		else:
-			f.dissatisfied_years = 0
+			f.dissatisfied_years = 0.0
 
-		if f.dissatisfied_years >= CRISIS_YEARS:
+		if f.dissatisfied_years >= float(CRISIS_YEARS):
 			result.add_event(
 				"faction_crisis_" + f.id,
 				"Faction crisis: %s is on the verge of revolt." % f.display_name,

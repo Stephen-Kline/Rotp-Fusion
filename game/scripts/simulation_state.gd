@@ -3,7 +3,10 @@ class_name SimulationState
 # Pure data — no logic. Governor reads this and returns a new instance each tick.
 
 # Time
-var year: int = 1950
+var year: float = 1950.0
+
+# Derived Kardashev level (recomputed each tick from energy + knowledge rates).
+var kardashev_level: float = 0.70
 
 # Economic pillars (allocation as percentages, must sum to 100)
 var pillar_food: float = 25.0
@@ -106,6 +109,7 @@ func _init_factions() -> void:
 func duplicate_state() -> SimulationState:
 	var s := SimulationState.new()
 	s.year = year
+	s.kardashev_level = kardashev_level
 	s.pillar_food = pillar_food
 	s.pillar_education = pillar_education
 	s.pillar_industry = pillar_industry

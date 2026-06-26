@@ -1,18 +1,17 @@
 extends Node
 
 # Routes typed events from the Governor to the notification queue and event log.
-# UI nodes connect to these signals on ready — they never write to SimulationState.
+# Auto-pause behavior is speed-aware: faster speeds trip on lower-priority events.
 
-enum Priority { LOW, HIGH, CRITICAL }
+enum Priority { LOW, MEDIUM, HIGH, CRITICAL }
 
 signal event_logged(entry: EventEntry)
 signal notification_requested(entry: EventEntry)
-signal time_pause_requested()
+signal time_pause_requested()   # CRITICAL events: full stop
+signal time_slow_requested()    # HIGH/MEDIUM events: drop to 0.2×, auto-resume
 
 var _log: Array[EventEntry] = []
-var pause_threshold: int = Priority.HIGH          # events at or above this trigger auto-pause
-var compression_threshold: int = 2               # above this compression level, NO auto-pause (FAST=2)
-var _current_compression: int = 0               # updated by GameLoop each time compression changes
+var _current_compression: int = 0
 
 
 class EventEntry:
@@ -35,20 +34,34 @@ func emit_event(id: String, message: String, priority: int, year: int, category:
 	_log.append(entry)
 	event_logged.emit(entry)
 
-	# Dual threshold: auto-pause ONLY IF priority >= pause_threshold AND
-	# current compression level is at or below compression_threshold
-	if priority >= pause_threshold:
-		notification_requested.emit(entry)
-		if _current_compression <= compression_threshold:
-			time_pause_requested.emit()
+	if priority < _pause_threshold_for(_current_compression):
+		return
+
+	notification_requested.emit(entry)
+
+	if priority >= Priority.CRITICAL:
+		time_pause_requested.emit()
+	else:
+		time_slow_requested.emit()
 
 
-func set_pause_threshold(level: int) -> void:
-	pause_threshold = level
-
-
-func set_compression_threshold(compression_level: int) -> void:
-	compression_threshold = compression_level
+# Returns the minimum event priority that triggers auto-pause at the given speed.
+func _pause_threshold_for(compression: int) -> int:
+	match compression:
+		Constants.CompressionLevel.SLOW, \
+		Constants.CompressionLevel.NORMAL:
+			return Priority.CRITICAL
+		Constants.CompressionLevel.FAST, \
+		Constants.CompressionLevel.FASTER:
+			return Priority.HIGH
+		Constants.CompressionLevel.MAX, \
+		Constants.CompressionLevel.KILO:
+			return Priority.MEDIUM
+		Constants.CompressionLevel.TEN_K, \
+		Constants.CompressionLevel.HUNDRED_K:
+			return Priority.LOW
+		_:  # PAUSED — irrelevant, nothing fires
+			return Priority.CRITICAL
 
 
 func update_compression(compression_level: int) -> void:

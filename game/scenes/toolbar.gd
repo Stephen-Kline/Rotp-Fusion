@@ -28,21 +28,13 @@ var _matl_stock:   Label
 var _year_label:    Label
 var _kard_label:    Label
 var _speed_btns:    Array[Button]  = []
+var _speed_levels:  Array[int]     = []  # parallel to _speed_btns: level each button represents
+var _speed_row:     HBoxContainer  = null
 var _faction_faces: Array[Control] = []
 var _faction_abbrs: Array[Label]   = []
 
 const FactionFace = preload("res://scenes/faction_face.gd")
 const _RH         = preload("res://scripts/resource_helpers.gd")
-
-const _LEVELS := [
-	Constants.CompressionLevel.PAUSED,
-	Constants.CompressionLevel.SLOW,
-	Constants.CompressionLevel.NORMAL,
-	Constants.CompressionLevel.FAST,
-	Constants.CompressionLevel.FASTER,
-	Constants.CompressionLevel.MAX,
-]
-const _SPEED_LABELS := ["⏸", "0.2×", "1×", "5×", "20×", "100×"]
 
 
 func _ready() -> void:
@@ -116,21 +108,13 @@ func _ready() -> void:
 	_kard_label.add_theme_color_override("font_color", _CYAN)
 	kpi_row.add_child(_kard_label)
 
-	var speed_row := HBoxContainer.new()
-	speed_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	speed_row.add_theme_constant_override("separation", 2)
-	mid.add_child(speed_row)
+	_speed_row = HBoxContainer.new()
+	_speed_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_speed_row.add_theme_constant_override("separation", 2)
+	mid.add_child(_speed_row)
 
-	for i in _SPEED_LABELS.size():
-		var btn := Button.new()
-		btn.text = _SPEED_LABELS[i]
-		btn.flat = true
-		btn.add_theme_font_size_override("font_size", 11)
-		btn.modulate = _DIM
-		var lvl: int = _LEVELS[i]
-		btn.pressed.connect(func(): _emit(lvl))
-		speed_row.add_child(btn)
-		_speed_btns.append(btn)
+	for level: int in Constants.BASE_SPEEDS:
+		_add_speed_button(level)
 
 	root.add_child(_vsep())
 
@@ -214,11 +198,9 @@ func _vsep() -> VSeparator:
 # ── Public API ────────────────────────────────────────────────────────────────
 
 func refresh(state: SimulationState) -> void:
-	_year_label.text = "%d" % state.year
+	_year_label.text = "%d" % int(state.year)
 
-	var k_e := _RH.k_from_energy(state.energy_rate)
-	var k_k := _RH.k_from_knowledge(state.knowledge_rate)
-	_kard_label.text = "K %.2f" % clampf(0.60 * k_e + 0.40 * k_k, 0.0, 2.0)
+	_kard_label.text = "K %.2f" % state.kardashev_level
 
 	var low_energy := state.energy_capacity < 0.15
 	var rate_color := _WARN if low_energy else _DIM
@@ -247,10 +229,30 @@ func refresh(state: SimulationState) -> void:
 func apply_compression(level: int) -> void:
 	_current_level = level
 	for i in _speed_btns.size():
-		_speed_btns[i].modulate = _ORANGE if _LEVELS[i] == level else _DIM
+		_speed_btns[i].modulate = _ORANGE if _speed_levels[i] == level else _DIM
+
+
+# Called by main.gd when a K-threshold is crossed. Adds the unlocked speed button.
+func unlock_speed(level: int) -> void:
+	if level in _speed_levels:
+		return
+	_add_speed_button(level)
 
 
 # ── Speed handler ─────────────────────────────────────────────────────────────
+
+func _add_speed_button(level: int) -> void:
+	var label: String = Constants.COMPRESSION_LABELS.get(level, "?")
+	var btn := Button.new()
+	btn.text = label
+	btn.flat = true
+	btn.add_theme_font_size_override("font_size", 11)
+	btn.modulate = _DIM
+	btn.pressed.connect(func(): _emit(level))
+	_speed_row.add_child(btn)
+	_speed_btns.append(btn)
+	_speed_levels.append(level)
+
 
 func _emit(level: int) -> void:
 	apply_compression(level)

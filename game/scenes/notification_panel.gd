@@ -1,8 +1,10 @@
 extends Control
 
 # Overlay notification panel. Shows one event at a time; queues the rest.
-# Connects to EventSystem.notification_requested on _ready.
-# Dismiss button resumes time (by emitting nothing — main.gd already wired pause/resume).
+# Emits notification_dismissed when the last queued entry is cleared so
+# main.gd can auto-resume from a CRITICAL pause.
+
+signal notification_dismissed
 
 @onready var category_label: Label = $PanelContainer/VBoxContainer/CategoryLabel
 @onready var message_label: Label = $PanelContainer/VBoxContainer/MessageLabel
@@ -27,6 +29,7 @@ func _on_notification(entry: EventSystem.EventEntry) -> void:
 func _show_next() -> void:
 	if _queue.is_empty():
 		hide()
+		notification_dismissed.emit()
 		return
 
 	var entry: EventSystem.EventEntry = _queue.pop_front()
@@ -48,5 +51,7 @@ func _priority_label(priority: int) -> String:
 			return "CRISIS"
 		EventSystem.Priority.HIGH:
 			return "MILESTONE"
+		EventSystem.Priority.MEDIUM:
+			return "EVENT"
 		_:
 			return "INFO"

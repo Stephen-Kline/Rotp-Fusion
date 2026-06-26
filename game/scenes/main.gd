@@ -7,11 +7,12 @@ extends Node
 @onready var event_log:       Control             = $UI/EarthView/EventLog
 @onready var tech_tree_panel: Control             = $UI/TechTreePanel
 @onready var victory_overlay: Control             = $UI/VictoryOverlay
-@onready var earth_view:      SubViewportContainer = $UI/EarthView/EarthContainer
-@onready var minimap:         Control             = $UI/EarthView/Minimap
-@onready var star_field:      Control             = $UI/EarthView/Background
-@onready var solar_system:    Control             = $UI/EarthView/SolarSystem
-@onready var fade_overlay:    ColorRect           = $UI/FadeOverlay
+@onready var earth_view:         SubViewportContainer = $UI/EarthView/EarthContainer
+@onready var minimap:            Control             = $UI/EarthView/Minimap
+@onready var star_field:         Control             = $UI/EarthView/Background
+@onready var solar_system:       Control             = $UI/EarthView/SolarSystem
+@onready var fade_overlay:       ColorRect           = $UI/FadeOverlay
+@onready var notification_panel: Control             = $UI/EarthView/NotificationPanel
 
 var _milestone1_shown: bool = false
 var _transitioning: bool = false
@@ -48,6 +49,8 @@ func _ready() -> void:
 	ScaleEngine.zone_changed.connect(_on_zone_changed)
 	solar_system.link_star_field(star_field)
 	solar_system.zone_transition_requested.connect(_do_transition)
+	EventSystem.time_slow_requested.connect(_on_time_slow)
+	notification_panel.notification_dismissed.connect(_on_notification_dismissed)
 
 	var s: SimulationState = game_loop.state
 	earth_view.update_state(s)
@@ -70,7 +73,8 @@ func _on_tick(state: SimulationState) -> void:
 	solar_system.update_state(state)
 	if not _milestone1_shown and state.milestone_flags.get("moon_landing", false):
 		_milestone1_shown = true
-		victory_overlay.show_victory(state.year)
+		victory_overlay.show_victory(int(state.year))
+	_check_speed_unlocks(state)
 
 
 func _on_zone_changed(zone: int) -> void:
@@ -110,6 +114,26 @@ func _on_speed_change(level: int) -> void:
 func _on_pause_requested() -> void:
 	game_loop.pause()
 	toolbar.apply_compression(Constants.CompressionLevel.PAUSED)
+
+
+func _on_time_slow() -> void:
+	game_loop.set_compression(Constants.CompressionLevel.SLOW)
+	toolbar.apply_compression(Constants.CompressionLevel.SLOW)
+
+
+# After the last queued notification is dismissed, auto-resume if we hard-stopped.
+func _on_notification_dismissed() -> void:
+	if game_loop.is_paused():
+		game_loop.set_compression(Constants.CompressionLevel.SLOW)
+		toolbar.apply_compression(Constants.CompressionLevel.SLOW)
+
+
+func _check_speed_unlocks(state: SimulationState) -> void:
+	for level in Constants.K_UNLOCK:
+		var k_req: float = Constants.K_UNLOCK[level]
+		if state.kardashev_level >= k_req and not game_loop.can_use_speed(level):
+			game_loop.unlock_speed(level)
+			toolbar.unlock_speed(level)
 
 
 func _on_allocation_changed(food: float, education: float, industry: float, energy: float) -> void:

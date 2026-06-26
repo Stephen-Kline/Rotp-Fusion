@@ -6,15 +6,16 @@ signal tick_processed(state: SimulationState)
 var compression: int = Constants.CompressionLevel.PAUSED
 var state: SimulationState
 var _governor: Governor
-var _accumulator: float = 0.0  # fractional years accumulated
-var _pending_actions: Array = []  # Array[PlayerAction]
-var _last_decade: int = 0          # tracks last decade for test events
+var _pending_actions: Array = []
+var _last_decade: int = 0
+# Highest speed tier the player has unlocked. Base cap = FASTER (10 yr/s).
+var _max_unlocked_level: int = Constants.CompressionLevel.FASTER
 
 
 func _ready() -> void:
 	state = SimulationState.new()
 	_governor = Governor.new()
-	_last_decade = state.year / 10
+	_last_decade = int(state.year) / 10
 	EventSystem.update_compression(compression)
 
 
@@ -23,24 +24,23 @@ func queue_action(action: PlayerAction) -> void:
 
 
 func _process(delta: float) -> void:
-	var years_per_second: float = Constants.YEARS_PER_SECOND[compression]
-	if years_per_second == 0.0:
-		# Still apply pending actions immediately so UI reflects changes even when paused
+	var yps: float = Constants.YEARS_PER_SECOND[compression]
+
+	if yps == 0.0:
+		# Still apply pending actions while paused so UI stays live.
 		if not _pending_actions.is_empty():
 			state = _governor.apply_actions(state, _pending_actions)
 			_pending_actions.clear()
 			tick_processed.emit(state)
 		return
 
-	_accumulator += delta * years_per_second
-
-	while _accumulator >= 1.0:
-		_accumulator -= 1.0
-		_run_tick(1.0)
+	# Cap: advance at most 1/20th of a second worth of game-time per frame.
+	# Guards against spiral-of-death on frame drops without affecting normal play.
+	var delta_years := minf(delta * yps, yps / 20.0)
+	_run_tick(delta_years)
 
 
 func _run_tick(delta_years: float) -> void:
-	# Apply player actions before computing the tick
 	if not _pending_actions.is_empty():
 		state = _governor.apply_actions(state, _pending_actions)
 		_pending_actions.clear()
@@ -53,19 +53,18 @@ func _run_tick(delta_years: float) -> void:
 			event["id"],
 			event["message"],
 			event["priority"],
-			event["year"],
+			int(state.year),
 			event.get("category", "")
 		)
 
-	# Test event: every 10 game-years emit a LOW priority "Decade passed" event
-	var current_decade: int = state.year / 10
+	var current_decade: int = int(state.year) / 10
 	if current_decade > _last_decade:
 		_last_decade = current_decade
 		EventSystem.emit_event(
 			"decade_passed",
-			"Decade passed: %d" % state.year,
+			"Decade passed: %d" % int(state.year),
 			EventSystem.Priority.LOW,
-			state.year,
+			int(state.year),
 			"INFO"
 		)
 
@@ -73,8 +72,18 @@ func _run_tick(delta_years: float) -> void:
 
 
 func set_compression(level: int) -> void:
+	if level > _max_unlocked_level:
+		return
 	compression = level
 	EventSystem.update_compression(level)
+
+
+func unlock_speed(level: int) -> void:
+	_max_unlocked_level = maxi(_max_unlocked_level, level)
+
+
+func can_use_speed(level: int) -> bool:
+	return level <= _max_unlocked_level
 
 
 func pause() -> void:
