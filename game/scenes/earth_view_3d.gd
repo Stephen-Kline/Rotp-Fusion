@@ -38,6 +38,7 @@ var _moon_landing        := false
 var _cam: Camera3D = null
 var _look_at: Vector3 = Vector3.ZERO
 var _cam_offset: Vector3 = Vector3(0.0, 3.2, 6.0)   # default viewing angle
+var _dragging: bool = false
 
 const _CAM_DIST_MIN := 2.5
 const _CAM_DIST_MAX := 18.0
@@ -645,11 +646,12 @@ func _gui_input(event: InputEvent) -> void:
 				if event.pressed:
 					_zoom_by(1.15)
 					get_viewport().set_input_as_handled()
+			MOUSE_BUTTON_LEFT:
+				_dragging = event.pressed
 			MOUSE_BUTTON_RIGHT:
 				if event.pressed:
 					_reset_camera()
-	elif event is InputEventMouseMotion:
-		# Pan on any mouse motion over the view (no click required)
+	elif event is InputEventMouseMotion and _dragging:
 		_pan(event.relative)
 
 
