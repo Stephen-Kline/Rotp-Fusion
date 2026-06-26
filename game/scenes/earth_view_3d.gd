@@ -34,6 +34,17 @@ var _active_research  := ""
 var _moon_mission_active := false
 var _moon_landing        := false
 
+# ── Camera pan/zoom state ─────────────────────────────────────────────────────
+var _cam: Camera3D = null
+var _look_at: Vector3 = Vector3.ZERO
+var _cam_offset: Vector3 = Vector3(0.0, 3.2, 6.0)   # default viewing angle
+var _dragging: bool = false
+var _drag_origin: Vector2 = Vector2.ZERO
+
+const _CAM_DIST_MIN := 2.5
+const _CAM_DIST_MAX := 18.0
+const _PAN_SPEED    := 0.0035   # world units per pixel per unit of cam distance
+
 # Satellite orbit slots — [orbital_radius, y_start_deg, z_inclination_deg, y_speed_deg_per_sec]
 # Speeds scaled by Kepler r^1.5 relative to the base LEO slot.
 const SAT_ORBIT_PARAMS: Array = [
@@ -113,10 +124,9 @@ func _build_3d_world() -> void:
 	sun.light_color = Color(1.0, 0.98, 0.95)
 	vp.add_child(sun)
 
-	var cam := Camera3D.new()
-	cam.position = Vector3(0.0, 3.2, 6.0)
-	vp.add_child(cam)
-	cam.look_at(Vector3(0, 0, 0), Vector3.UP)
+	_cam = Camera3D.new()
+	vp.add_child(_cam)
+	_update_camera()
 
 	_earth_root = Node3D.new()
 	vp.add_child(_earth_root)
@@ -599,3 +609,62 @@ func _orient_y_up(node: Node3D, pos: Vector3) -> void:
 	var ref := Vector3(0, 0, 1) if abs(up.dot(Vector3(0, 1, 0))) > 0.99 else Vector3(0, 1, 0)
 	var right := ref.cross(up).normalized()
 	node.basis = Basis(right, up, right.cross(up).cross(right))
+
+
+# ── Pan / zoom ────────────────────────────────────────────────────────────────
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		match event.button_index:
+			MOUSE_BUTTON_WHEEL_UP:
+				if event.pressed:
+					_zoom_by(1.0 / 1.15)
+					get_viewport().set_input_as_handled()
+			MOUSE_BUTTON_WHEEL_DOWN:
+				if event.pressed:
+					_zoom_by(1.15)
+					get_viewport().set_input_as_handled()
+			MOUSE_BUTTON_LEFT:
+				_dragging = event.pressed
+				_drag_origin = event.position
+			MOUSE_BUTTON_RIGHT:
+				if event.pressed:
+					_reset_camera()
+	elif event is InputEventMouseMotion and _dragging:
+		_pan(event.position - _drag_origin)
+		_drag_origin = event.position
+
+
+func _zoom_by(factor: float) -> void:
+	var new_offset := _cam_offset * factor
+	var dist := new_offset.length()
+	if dist < _CAM_DIST_MIN or dist > _CAM_DIST_MAX:
+		return
+	_cam_offset = new_offset
+	_update_camera()
+
+
+func _pan(delta_px: Vector2) -> void:
+	if not _cam:
+		return
+	var dist := _cam_offset.length()
+	var right := _cam.global_transform.basis.x
+	var up    := _cam.global_transform.basis.y
+	var pan   := (right * -delta_px.x + up * delta_px.y) * _PAN_SPEED * dist
+	_look_at += pan
+	# Clamp look-at so it doesn't drift too far from the Earth.
+	_look_at = _look_at.clampf(-4.0, 4.0)
+	_update_camera()
+
+
+func _reset_camera() -> void:
+	_look_at   = Vector3.ZERO
+	_cam_offset = Vector3(0.0, 3.2, 6.0)
+	_update_camera()
+
+
+func _update_camera() -> void:
+	if not _cam:
+		return
+	_cam.position = _look_at + _cam_offset
+	_cam.look_at(_look_at, Vector3.UP)
