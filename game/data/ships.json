@@ -1,0 +1,29 @@
+[
+  {
+    "id": "satellite",
+    "display_name": "Communications Satellite",
+    "role": "probe",
+    "materials": 5e7,
+    "energy": 5e17,
+    "build_days": 90.0,
+    "description": "A general-purpose orbital platform. Provides communications relay and reconnaissance."
+  },
+  {
+    "id": "lunar_transit_vehicle",
+    "display_name": "Lunar Transit Vehicle",
+    "role": "probe",
+    "materials": 3e8,
+    "energy": 3e18,
+    "build_days": 180.0,
+    "description": "An uncrewed lunar probe capable of reaching lunar orbit and conducting surface surveys."
+  },
+  {
+    "id": "crewed_lunar_lander",
+    "display_name": "Crewed Lunar Lander",
+    "role": "mission_specific",
+    "materials": 1e9,
+    "energy": 1e19,
+    "build_days": 540.0,
+    "description": "A crewed spacecraft capable of landing on the Moon and returning safely to Earth."
+  }
+]

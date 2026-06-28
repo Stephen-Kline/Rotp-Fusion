@@ -1,0 +1,18 @@
+[
+  {
+    "id": "launch_facility",
+    "display_name": "Launch Facility",
+    "materials": 1e9,
+    "energy": 1e19,
+    "struct_bonuses": {},
+    "description": "A ground-based rocket launch complex. Required to build and launch spacecraft."
+  },
+  {
+    "id": "space_launch_facility",
+    "display_name": "Space Launch Facility",
+    "materials": 5e9,
+    "energy": 5e19,
+    "struct_bonuses": {},
+    "description": "An advanced launch complex with reusable systems and higher throughput. Supports heavy-lift missions."
+  }
+]

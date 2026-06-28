@@ -1,7 +1,6 @@
 extends PanelContainer
-# Single-row top toolbar (~42 px). Builds its own UI in _ready().
 
-signal speed_change_requested(level: int)
+signal speed_change_requested(speed_index: int)
 signal tech_tree_toggled
 signal event_log_toggled
 signal budget_toggled
@@ -14,9 +13,8 @@ const _CYAN   := Color(0.20, 0.82, 0.90)
 const _DIM    := Color(0.38, 0.45, 0.58)
 const _WARN   := Color(1.00, 0.28, 0.10)
 
-var _current_level: int = Constants.CompressionLevel.PAUSED
+var _current_speed: int = Constants.SPEED_PAUSE
 
-# Each resource: [rate_label, stock_label]
 var _energy_rate:  Label
 var _energy_stock: Label
 var _cons_rate:    Label
@@ -26,13 +24,16 @@ var _know_stock:   Label
 var _matl_rate:    Label
 var _matl_stock:   Label
 
-var _year_label:    Label
-var _kard_label:    Label
-var _speed_btns:    Array[Button]  = []
-var _speed_levels:  Array[int]     = []  # parallel to _speed_btns: level each button represents
-var _speed_row:     HBoxContainer  = null
+var _time_label:   Label
+var _kard_label:   Label
+var _pause_btn:    Button
+var _play_btn:     Button
+var _fast_btn:     Button   # cycles: 1× → 10× → 100× → 1000× → 1×
 var _faction_faces: Array[Control] = []
 var _faction_abbrs: Array[Label]   = []
+
+# Index within the fast-forward cycle: 1=1× 2=10× 3=100× 4=1000×
+var _ff_index: int = Constants.SPEED_1X
 
 const FactionFace = preload("res://scenes/faction_face.gd")
 const _RH         = preload("res://scripts/resource_helpers.gd")
@@ -51,7 +52,7 @@ func _ready() -> void:
 	root.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	add_child(root)
 
-	# ── LEFT: economy indicators — click to open budget dropdown ─────────────
+	# ── LEFT: economy indicators ──────────────────────────────────────────────
 	var lpad := Control.new(); lpad.custom_minimum_size = Vector2(10, 0)
 	root.add_child(lpad)
 
@@ -84,7 +85,7 @@ func _ready() -> void:
 
 	root.add_child(_vsep())
 
-	# ── CENTER: Year + K on top, speed buttons below ──────────────────────────
+	# ── CENTER: time + K on top, speed controls below ─────────────────────────
 	var mid := VBoxContainer.new()
 	mid.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	mid.add_theme_constant_override("separation", 1)
@@ -95,12 +96,12 @@ func _ready() -> void:
 	kpi_row.add_theme_constant_override("separation", 10)
 	mid.add_child(kpi_row)
 
-	_year_label = Label.new()
-	_year_label.text = "1950"
-	_year_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_year_label.add_theme_font_size_override("font_size", 16)
-	_year_label.add_theme_color_override("font_color", _ORANGE)
-	kpi_row.add_child(_year_label)
+	_time_label = Label.new()
+	_time_label.text = "Day 1"
+	_time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_time_label.add_theme_font_size_override("font_size", 16)
+	_time_label.add_theme_color_override("font_color", _ORANGE)
+	kpi_row.add_child(_time_label)
 
 	_kard_label = Label.new()
 	_kard_label.text = "K 0.70"
@@ -109,13 +110,24 @@ func _ready() -> void:
 	_kard_label.add_theme_color_override("font_color", _CYAN)
 	kpi_row.add_child(_kard_label)
 
-	_speed_row = HBoxContainer.new()
-	_speed_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_speed_row.add_theme_constant_override("separation", 2)
-	mid.add_child(_speed_row)
+	var speed_row := HBoxContainer.new()
+	speed_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	speed_row.add_theme_constant_override("separation", 4)
+	mid.add_child(speed_row)
 
-	for level: int in Constants.BASE_SPEEDS:
-		_add_speed_button(level)
+	_pause_btn = _make_speed_btn("⏸")
+	_pause_btn.pressed.connect(_on_pause)
+	speed_row.add_child(_pause_btn)
+
+	_play_btn = _make_speed_btn("▶")
+	_play_btn.pressed.connect(_on_play)
+	speed_row.add_child(_play_btn)
+
+	_fast_btn = _make_speed_btn("⏩ 1×")
+	_fast_btn.pressed.connect(_on_fast_forward)
+	speed_row.add_child(_fast_btn)
+
+	_update_speed_buttons()
 
 	root.add_child(_vsep())
 
@@ -174,8 +186,6 @@ func _ready() -> void:
 	root.add_child(rpad)
 
 
-# Returns [rate_label, stock_label] stacked in a VBoxContainer column.
-# Top row: resource name + rate (small, dim).  Bottom row: stockpile (cream).
 func _stat(parent: HBoxContainer, name: String) -> Array:
 	var col := VBoxContainer.new()
 	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -203,11 +213,53 @@ func _vsep() -> VSeparator:
 	return s
 
 
+func _make_speed_btn(label: String) -> Button:
+	var btn := Button.new()
+	btn.text = label
+	btn.flat = true
+	btn.add_theme_font_size_override("font_size", 11)
+	return btn
+
+
+# ── Speed controls ────────────────────────────────────────────────────────────
+
+func _on_pause() -> void:
+	_current_speed = Constants.SPEED_PAUSE
+	_update_speed_buttons()
+	speed_change_requested.emit(Constants.SPEED_PAUSE)
+
+
+func _on_play() -> void:
+	_current_speed = Constants.SPEED_1X
+	_ff_index = Constants.SPEED_1X
+	_update_speed_buttons()
+	speed_change_requested.emit(Constants.SPEED_1X)
+
+
+func _on_fast_forward() -> void:
+	# Cycle: 1× → 10× → 100× → 1000× → wrap to 1×
+	if _ff_index >= Constants.SPEED_1000X:
+		_ff_index = Constants.SPEED_1X
+	else:
+		_ff_index += 1
+	_current_speed = _ff_index
+	_update_speed_buttons()
+	speed_change_requested.emit(_current_speed)
+
+
+func _update_speed_buttons() -> void:
+	var paused := _current_speed == Constants.SPEED_PAUSE
+	_pause_btn.modulate = _ORANGE if paused else _DIM
+	_play_btn.modulate  = _ORANGE if _current_speed == Constants.SPEED_1X else _DIM
+	var ff_label := "⏩ %s" % Constants.SPEED_LABELS.get(_ff_index, "1×")
+	_fast_btn.text = ff_label
+	_fast_btn.modulate = _ORANGE if _current_speed >= Constants.SPEED_10X else _DIM
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
 func refresh(state: SimulationState) -> void:
-	_year_label.text = "%d" % int(state.year)
-
+	_time_label.text = _format_elapsed(state.elapsed_days)
 	_kard_label.text = "K %.2f" % state.kardashev_level
 
 	var low_energy := state.energy_capacity < 0.15
@@ -234,34 +286,21 @@ func refresh(state: SimulationState) -> void:
 		_faction_abbrs[i].text = f.display_name.substr(0, 3)
 
 
-func apply_compression(level: int) -> void:
-	_current_level = level
-	for i in _speed_btns.size():
-		_speed_btns[i].modulate = _ORANGE if _speed_levels[i] == level else _DIM
+func apply_speed(speed_index: int) -> void:
+	_current_speed = speed_index
+	if speed_index >= Constants.SPEED_10X:
+		_ff_index = speed_index
+	_update_speed_buttons()
 
 
-# Called by main.gd when a K-threshold is crossed. Adds the unlocked speed button.
-func unlock_speed(level: int) -> void:
-	if level in _speed_levels:
-		return
-	_add_speed_button(level)
-
-
-# ── Speed handler ─────────────────────────────────────────────────────────────
-
-func _add_speed_button(level: int) -> void:
-	var label: String = Constants.COMPRESSION_LABELS.get(level, "?")
-	var btn := Button.new()
-	btn.text = label
-	btn.flat = true
-	btn.add_theme_font_size_override("font_size", 11)
-	btn.modulate = _DIM
-	btn.pressed.connect(func(): _emit(level))
-	_speed_row.add_child(btn)
-	_speed_btns.append(btn)
-	_speed_levels.append(level)
-
-
-func _emit(level: int) -> void:
-	apply_compression(level)
-	speed_change_requested.emit(level)
+static func _format_elapsed(days: float) -> String:
+	var d := int(days)
+	var h := int((days - float(d)) * 24.0)
+	if d < 30:
+		return "Day %d, %dh" % [d + 1, h]
+	if d < 365:
+		var month := d / 30 + 1
+		return "Month %d" % month
+	var year := d / 365
+	var m_in_year := (d % 365) / 30 + 1
+	return "Year %d, Month %d" % [year, m_in_year]

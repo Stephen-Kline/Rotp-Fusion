@@ -99,7 +99,7 @@ const GALACTIC_LANDMARKS := [
 var _ppu: float = 80.0
 var _zoom: float = 1.0
 var _pan: Vector2 = Vector2.ZERO
-var _game_year: float = 1950.0
+var _elapsed_days: float = 0.0
 var _dragging: bool = false
 var _drag_origin: Vector2 = Vector2.ZERO
 var _pan_origin: Vector2 = Vector2.ZERO
@@ -123,7 +123,7 @@ func link_star_field(sf: Control) -> void:
 
 
 func update_state(state: SimulationState) -> void:
-	_game_year = float(state.year)
+	_elapsed_days = float(state.elapsed_days)
 	queue_redraw()
 
 
@@ -254,7 +254,7 @@ func _draw_planets() -> void:
 			draw_arc(_world_to_screen(Vector2.ZERO), orbit_r, 0.0, TAU, 128,
 				Color(color.r, color.g, color.b, 0.18), 1.0)
 
-		var angle_rad := deg_to_rad(ang0 + (360.0 / period) * (_game_year - 1950.0))
+		var angle_rad := deg_to_rad(ang0 + (360.0 / period) * (_elapsed_days / 365.25))
 		var sp := _world_to_screen(Vector2(cos(angle_rad), -sin(angle_rad)) * a)
 		if sp.x < -50 or sp.x > sz.x + 50 or sp.y < -50 or sp.y > sz.y + 50:
 			continue
@@ -307,7 +307,7 @@ func _draw_focused_moons(planet_name: String, planet_sp: Vector2) -> void:
 		draw_arc(planet_sp, orbit_px, 0.0, TAU, 64,
 			Color(color.r, color.g, color.b, 0.25), 1.0)
 
-		var angle := deg_to_rad(ang0 + (360.0 / period) * (_game_year - 1950.0))
+		var angle := deg_to_rad(ang0 + (360.0 / period) * (_elapsed_days / 365.25))
 		var mpos := planet_sp + Vector2(cos(angle), -sin(angle)) * orbit_px
 		draw_circle(mpos, dot_r, color)
 		draw_string(font, mpos + Vector2(dot_r + 2.0, 3.0),
@@ -648,7 +648,7 @@ func _try_select_planet(screen_pos: Vector2) -> void:
 		var a: float      = float(p[1])
 		var period: float = float(p[2])
 		var ang0: float   = float(p[3])
-		var angle := deg_to_rad(ang0 + (360.0 / period) * (_game_year - 1950.0))
+		var angle := deg_to_rad(ang0 + (360.0 / period) * (_elapsed_days / 365.25))
 		var sp := _world_to_screen(Vector2(cos(angle), -sin(angle)) * a)
 		var d := screen_pos.distance_to(sp)
 		if d < best_d:
@@ -676,7 +676,7 @@ func _try_double_click(screen_pos: Vector2) -> void:
 		var a:      float  = float(p[1])
 		var period: float  = float(p[2])
 		var ang0:   float  = float(p[3])
-		var angle := deg_to_rad(ang0 + (360.0 / period) * (_game_year - 1950.0))
+		var angle := deg_to_rad(ang0 + (360.0 / period) * (_elapsed_days / 365.25))
 		var sp := _world_to_screen(Vector2(cos(angle), -sin(angle)) * a)
 		if screen_pos.distance_to(sp) < 20.0:
 			if pname == "Earth":

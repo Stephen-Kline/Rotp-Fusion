@@ -3,6 +3,7 @@ extends Node
 # Zone transitions are animated by main.gd; this singleton holds the state.
 
 signal zone_changed(new_zone: int)
+signal body_changed(body_name: String)
 
 # 1-indexed. unit is the display label; rings are zone-appropriate distance markers.
 const ZONES := [
@@ -20,6 +21,7 @@ const ZONES := [
 ]
 
 var current_zone: int = 1
+var current_body: String = "Earth"   # which body zone-1 local view shows
 var _max_unlocked: int = 10  # All zones unlocked for development
 
 
@@ -33,6 +35,11 @@ func transition_to(zone: int) -> void:
 		return
 	current_zone = zone
 	zone_changed.emit(zone)
+
+
+func select_body(name: String) -> void:
+	current_body = name
+	body_changed.emit(name)
 
 
 func unlock_up_to(zone: int) -> void:

@@ -1,40 +1,41 @@
 extends Node
 
-# Routes typed events from the Governor to the notification queue and event log.
-# Auto-pause behavior is speed-aware: faster speeds trip on lower-priority events.
-
 enum Priority { LOW, MEDIUM, HIGH, CRITICAL }
 
 signal event_logged(entry: EventEntry)
 signal notification_requested(entry: EventEntry)
-signal time_pause_requested()   # CRITICAL events: full stop
-signal time_slow_requested()    # HIGH/MEDIUM events: drop to 0.2×, auto-resume
+signal time_pause_requested()
+signal time_slow_requested()
 
 var _log: Array[EventEntry] = []
-var _current_compression: int = 0
+var _current_speed_index: int = 0
 
 
 class EventEntry:
 	var id: String
 	var message: String
 	var priority: int
-	var year: int
+	var elapsed_day: int
 	var category: String
+	var payload: Dictionary
 
-	func _init(p_id: String, p_message: String, p_priority: int, p_year: int, p_category: String = "") -> void:
+	func _init(p_id: String, p_message: String, p_priority: int, p_day: int,
+			p_category: String = "", p_payload: Dictionary = {}) -> void:
 		id = p_id
 		message = p_message
 		priority = p_priority
-		year = p_year
+		elapsed_day = p_day
 		category = p_category
+		payload = p_payload
 
 
-func emit_event(id: String, message: String, priority: int, year: int, category: String = "") -> void:
-	var entry := EventEntry.new(id, message, priority, year, category)
+func emit_event(id: String, message: String, priority: int, elapsed_day: int,
+		category: String = "", payload: Dictionary = {}) -> void:
+	var entry := EventEntry.new(id, message, priority, elapsed_day, category, payload)
 	_log.append(entry)
 	event_logged.emit(entry)
 
-	if priority < _pause_threshold_for(_current_compression):
+	if priority < _pause_threshold_for(_current_speed_index):
 		return
 
 	notification_requested.emit(entry)
@@ -45,27 +46,22 @@ func emit_event(id: String, message: String, priority: int, year: int, category:
 		time_slow_requested.emit()
 
 
-# Returns the minimum event priority that triggers auto-pause at the given speed.
-func _pause_threshold_for(compression: int) -> int:
-	match compression:
-		Constants.CompressionLevel.SLOW, \
-		Constants.CompressionLevel.NORMAL:
+func _pause_threshold_for(speed_index: int) -> int:
+	match speed_index:
+		Constants.SPEED_PAUSE, Constants.SPEED_1X:
 			return Priority.CRITICAL
-		Constants.CompressionLevel.FAST, \
-		Constants.CompressionLevel.FASTER:
+		Constants.SPEED_10X:
 			return Priority.HIGH
-		Constants.CompressionLevel.MAX, \
-		Constants.CompressionLevel.KILO:
+		Constants.SPEED_100X:
 			return Priority.MEDIUM
-		Constants.CompressionLevel.TEN_K, \
-		Constants.CompressionLevel.HUNDRED_K:
+		Constants.SPEED_1000X:
 			return Priority.LOW
-		_:  # PAUSED — irrelevant, nothing fires
+		_:
 			return Priority.CRITICAL
 
 
-func update_compression(compression_level: int) -> void:
-	_current_compression = compression_level
+func update_speed(speed_index: int) -> void:
+	_current_speed_index = speed_index
 
 
 func get_log() -> Array[EventEntry]:

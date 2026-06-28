@@ -36,7 +36,7 @@ func _show_next() -> void:
 	var category_text: String = entry.category if entry.category != "" else _priority_label(entry.priority)
 	category_label.text = "[%s]" % category_text
 	message_label.text = entry.message
-	year_label.text = "Year %d" % entry.year
+	year_label.text = "Day %d" % (entry.elapsed_day + 1)
 	show()
 
 

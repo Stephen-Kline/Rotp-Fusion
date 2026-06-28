@@ -1,27 +1,28 @@
 class_name Faction
+extends Resource
 
 # Pure data — no logic. Represents one political faction in the simulation.
 
-var id: String = ""
-var display_name: String = ""
-var ideological_type: String = ""  # technocrat/industrialist/environmentalist/internationalist/conservative
-var preferred_pillar: String = ""  # food/education/industry/energy
-var satisfaction: float = 50.0    # 0–100
-var weight: float = 0.0           # 0–1, how much political capital this faction generates
-var dissatisfied_years: float = 0.0  # accumulated years below crisis threshold
+@export var id: String = ""
+@export var display_name: String = ""
+@export var ideological_type: String = ""  # technocrat/industrialist/environmentalist/internationalist/conservative
+@export var preferred_pillar: String = ""  # food/education/industry/energy
+@export var satisfaction: float = 50.0    # 0–100
+@export var weight: float = 0.0           # 0–1, how much political capital this faction generates
+@export var dissatisfied_years: float = 0.0  # accumulated years below crisis threshold
 
 # Tracks last two satisfaction readings for trend arrow
-var _prev_satisfaction: float = 50.0
-var _cur_satisfaction: float = 50.0
+@export var _prev_satisfaction: float = 50.0
+@export var _cur_satisfaction: float = 50.0
 
 
 func _init(
-	p_id: String,
-	p_display_name: String,
-	p_ideological_type: String,
-	p_preferred_pillar: String,
-	p_satisfaction: float,
-	p_weight: float
+	p_id: String = "",
+	p_display_name: String = "",
+	p_ideological_type: String = "",
+	p_preferred_pillar: String = "",
+	p_satisfaction: float = 50.0,
+	p_weight: float = 0.0
 ) -> void:
 	id = p_id
 	display_name = p_display_name
@@ -31,14 +32,6 @@ func _init(
 	weight = p_weight
 	_prev_satisfaction = p_satisfaction
 	_cur_satisfaction = p_satisfaction
-
-
-func duplicate() -> Faction:
-	var f := Faction.new(id, display_name, ideological_type, preferred_pillar, satisfaction, weight)
-	f.dissatisfied_years = dissatisfied_years
-	f._prev_satisfaction = _prev_satisfaction
-	f._cur_satisfaction = _cur_satisfaction
-	return f
 
 
 # Returns +1 (trending up), -1 (trending down), or 0 (flat)

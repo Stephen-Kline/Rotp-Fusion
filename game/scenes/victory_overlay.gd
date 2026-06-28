@@ -10,8 +10,8 @@ func _ready() -> void:
 	_continue_btn.pressed.connect(_on_continue_pressed)
 
 
-func show_victory(year: int) -> void:
-	_year_label.text = "Year %d" % year
+func show_victory(elapsed_days: int) -> void:
+	_year_label.text = "Day %d" % (elapsed_days + 1)
 	show()
 
 

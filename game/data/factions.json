@@ -1,0 +1,47 @@
+[
+  {
+    "id": "technocrat",
+    "display_name": "Technocrats",
+    "ideological_type": "technocrat",
+    "preferred_pillar": "education",
+    "starting_satisfaction": 55.0,
+    "weight": 0.25,
+    "description": "Scientists, engineers, and futurists who believe technology is the answer to every human problem. They prioritize research above all else."
+  },
+  {
+    "id": "industrialist",
+    "display_name": "Industrialists",
+    "ideological_type": "industrialist",
+    "preferred_pillar": "industry",
+    "starting_satisfaction": 50.0,
+    "weight": 0.25,
+    "description": "Manufacturing interests and growth economists who view industrial output as the engine of civilization. They demand heavy investment in production."
+  },
+  {
+    "id": "environmentalist",
+    "display_name": "Environmentalists",
+    "ideological_type": "environmentalist",
+    "preferred_pillar": "energy",
+    "starting_satisfaction": 45.0,
+    "weight": 0.20,
+    "description": "Advocates for sustainable energy and planetary stewardship. They support clean power and are skeptical of unchecked industrial expansion."
+  },
+  {
+    "id": "internationalist",
+    "display_name": "Internationalists",
+    "ideological_type": "internationalist",
+    "preferred_pillar": "food",
+    "starting_satisfaction": 55.0,
+    "weight": 0.15,
+    "description": "Global cooperation advocates who believe human welfare and food security must underpin all civilizational ambition."
+  },
+  {
+    "id": "conservative",
+    "display_name": "Conservatives",
+    "ideological_type": "conservative",
+    "preferred_pillar": "food",
+    "starting_satisfaction": 62.0,
+    "weight": 0.15,
+    "description": "Traditionalists who prioritize stability, self-sufficiency, and proven approaches. Skeptical of rapid change but supportive of steady progress."
+  }
+]

@@ -26,7 +26,7 @@ func _on_event_logged(entry: EventSystem.EventEntry) -> void:
 func _add_entry(entry: EventSystem.EventEntry) -> void:
 	var label := Label.new()
 	var category_text: String = entry.category if entry.category != "" else _priority_label(entry.priority)
-	label.text = "[%d] [%s] %s" % [entry.year, category_text, entry.message]
+	label.text = "[Day %d] [%s] %s" % [entry.elapsed_day + 1, category_text, entry.message]
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_font_size_override("font_size", 13)
 

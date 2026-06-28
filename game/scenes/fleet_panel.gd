@@ -1,10 +1,6 @@
 class_name FleetPanel
 extends PanelContainer
 
-# General ship management panel.
-# Build section: structures and ships from available_build_options.
-# Fleet section: per-ship rows updated in-place to avoid flicker.
-
 signal build_structure_requested(structure_type: String, body: String)
 signal build_ship_requested(build_option: String)
 signal launch_ship_requested(ship_id: String, destination: String, use_direct: bool)
@@ -17,27 +13,23 @@ const _DIM   := Color(0.38, 0.45, 0.58)
 const _GREEN := Color(0.30, 0.85, 0.40)
 const _WARN  := Color(1.00, 0.28, 0.10)
 
-# Destination IDs offered in the launch picker.
 const DEST_IDS    := ["moon", "l2"]
 const DEST_LABELS := {"moon": "Moon", "l2": "Earth-Moon L2"}
-
-# Which build_options are structures vs. ships
 const STRUCTURE_OPTIONS := ["launch_facility", "space_launch_facility"]
 
 var _build_section: VBoxContainer
 var _fleet_section: VBoxContainer
-
-# Persists the player's destination selection per ship across rebuilds.
 var _ship_destinations: Dictionary = {}
-
-# Ship row refs for in-place progress updates. ship_id -> {vbox, pb, eta}
 var _fleet_rows: Dictionary = {}
-# Snapshot for detecting state changes: ship_id -> ship_state int
 var _prev_states: Dictionary = {}
+var _ship_db: ShipDB
+var _struct_db: StructureDB
 
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(300, 0)
+	_ship_db = ShipDB.new()
+	_struct_db = StructureDB.new()
 
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = Color(_NAVY.r, _NAVY.g, _NAVY.b, 0.96)
@@ -50,7 +42,6 @@ func _ready() -> void:
 	outer.add_theme_constant_override("separation", 0)
 	add_child(outer)
 
-	# ── Header ────────────────────────────────────────────────────────────
 	var header_row := HBoxContainer.new()
 	header_row.add_theme_constant_override("separation", 0)
 	outer.add_child(header_row)
@@ -75,7 +66,6 @@ func _ready() -> void:
 
 	outer.add_child(HSeparator.new())
 
-	# ── Scrollable body ───────────────────────────────────────────────────
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -90,7 +80,6 @@ func _ready() -> void:
 	body.add_theme_stylebox_override("panel", pad)
 	scroll.add_child(body)
 
-	# BUILD section
 	var build_lbl := Label.new()
 	build_lbl.text = "BUILD"
 	build_lbl.add_theme_font_size_override("font_size", 10)
@@ -103,7 +92,6 @@ func _ready() -> void:
 
 	body.add_child(HSeparator.new())
 
-	# FLEET section
 	var fleet_lbl := Label.new()
 	fleet_lbl.text = "FLEET"
 	fleet_lbl.add_theme_font_size_override("font_size", 10)
@@ -115,14 +103,10 @@ func _ready() -> void:
 	body.add_child(_fleet_section)
 
 
-# ── Public API ────────────────────────────────────────────────────────────────
-
 func refresh(state: SimulationState) -> void:
 	_refresh_build(state)
 	_refresh_fleet(state)
 
-
-# ── Build section ─────────────────────────────────────────────────────────────
 
 func _refresh_build(state: SimulationState) -> void:
 	for c in _build_section.get_children():
@@ -142,12 +126,11 @@ func _refresh_build(state: SimulationState) -> void:
 
 	for option: String in state.available_build_options:
 		var is_struct: bool = option in STRUCTURE_OPTIONS
-		var cost_table: Dictionary = Constants.STRUCTURE_COSTS if is_struct \
-			else Constants.SHIP_BUILD_COSTS
-		var cost: Dictionary = cost_table.get(option, {})
+		var cost: Dictionary = _struct_db.get_cost(option) if is_struct \
+			else _ship_db.get_cost(option)
 		var mat: float = float(cost.get("materials", 0.0))
 		var nrg: float = float(cost.get("energy", 0.0))
-		var build_yr: float = float(cost.get("build_years", 0.0))
+		var build_days: float = float(cost.get("build_days", 0.0))
 
 		var can_afford: bool = state.materials_stockpile >= mat \
 			and state.energy_stockpile >= nrg
@@ -173,8 +156,8 @@ func _refresh_build(state: SimulationState) -> void:
 			cost_parts.append(ResourceHelpers.format_si(mat, "t"))
 		if nrg > 0.0:
 			cost_parts.append(ResourceHelpers.format_si(nrg, "J"))
-		if build_yr > 0.0:
-			cost_parts.append("%.1fyr" % build_yr)
+		if build_days > 0.0:
+			cost_parts.append("%.0fd" % build_days)
 		var cost_lbl := Label.new()
 		cost_lbl.text = "  ".join(cost_parts)
 		cost_lbl.add_theme_font_size_override("font_size", 9)
@@ -201,10 +184,7 @@ func _refresh_build(state: SimulationState) -> void:
 			btn.pressed.connect(func(): build_ship_requested.emit(opt))
 
 
-# ── Fleet section ─────────────────────────────────────────────────────────────
-
 func _refresh_fleet(state: SimulationState) -> void:
-	# Remove rows for ships that no longer exist
 	var live_ids: Array = state.ships.map(func(s: Ship) -> String: return s.id)
 	for sid in _fleet_rows.keys():
 		if sid not in live_ids:
@@ -227,14 +207,11 @@ func _refresh_fleet(state: SimulationState) -> void:
 	for ship: Ship in state.ships:
 		var prev_state: int = _prev_states.get(ship.id, -1)
 		if ship.id not in _fleet_rows:
-			# New ship — create full row
 			_fleet_rows[ship.id] = _create_ship_row(ship, state)
 		elif prev_state != ship.ship_state:
-			# State changed — rebuild this row
 			_fleet_rows[ship.id]["vbox"].queue_free()
 			_fleet_rows[ship.id] = _create_ship_row(ship, state)
 		else:
-			# Same state — update progress in-place
 			_update_ship_row_progress(ship, state, _fleet_rows[ship.id])
 
 		_prev_states[ship.id] = ship.ship_state
@@ -245,7 +222,6 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 	vbox.add_theme_constant_override("separation", 3)
 	_fleet_section.add_child(vbox)
 
-	# Header: label + status badge
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 6)
 	vbox.add_child(header)
@@ -261,7 +237,6 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 	status_lbl.add_theme_font_size_override("font_size", 10)
 	header.add_child(status_lbl)
 
-	# Propulsion badge
 	var prop_lbl := Label.new()
 	prop_lbl.text = PropulsionData.tier_name(ship.propulsion_tier)
 	prop_lbl.add_theme_font_size_override("font_size", 9)
@@ -278,15 +253,15 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			var pb := ProgressBar.new()
 			pb.min_value = 0.0
 			pb.max_value = 1.0
-			var total := maxf(0.001, ship.build_complete_year - ship.build_start_year)
-			pb.value = clampf((state.year - ship.build_start_year) / total, 0.0, 1.0)
+			var total := maxf(0.001, ship.build_complete_day - ship.build_start_day)
+			pb.value = clampf((state.elapsed_days - ship.build_start_day) / total, 0.0, 1.0)
 			pb.custom_minimum_size = Vector2(0, 8)
 			vbox.add_child(pb)
 			refs["pb"] = pb
 
 			var eta := Label.new()
-			var days_left := maxf(0.0, ship.build_complete_year - state.year) * 365.25
-			eta.text = "Ready in %.0f days (~%d)" % [days_left, int(ship.build_complete_year)]
+			var days_left := maxf(0.0, ship.build_complete_day - state.elapsed_days)
+			eta.text = "Ready in %.0f days" % days_left
 			eta.add_theme_font_size_override("font_size", 9)
 			eta.add_theme_color_override("font_color", _DIM)
 			vbox.add_child(eta)
@@ -296,7 +271,6 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			status_lbl.text = "Ready ✓"
 			status_lbl.add_theme_color_override("font_color", _GREEN)
 
-			# Destination picker
 			if ship.id not in _ship_destinations:
 				_ship_destinations[ship.id] = "moon"
 
@@ -315,7 +289,7 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			var sid := ship.id
 			dest_opt.item_selected.connect(func(idx: int):
 				_ship_destinations[sid] = DEST_IDS[idx]
-				_prev_states.erase(sid)  # force row rebuild on next refresh
+				_prev_states.erase(sid)
 			)
 			dest_row.add_child(dest_opt)
 
@@ -329,23 +303,20 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			)
 			dest_row.add_child(launch_btn)
 
-			# Window + transit info
 			var dest_str: String = _ship_destinations.get(ship.id, "moon")
 			var direct_ok := PropulsionData.is_direct_unlocked(state.completed_research)
 			var prof := FlightPlanner.plan(
-				ship.origin_body, dest_str, state.year, ship.propulsion_tier, direct_ok)
-			var window_days := prof.window_wait_years * 365.25
-			var transit_days := prof.transit_years * 365.25
+				ship.origin_body, dest_str, state.elapsed_days, ship.propulsion_tier, direct_ok)
 
 			var info_lbl := Label.new()
-			info_lbl.text = "Window: %.0fd  Transit: %.1fd" % [window_days, transit_days]
+			info_lbl.text = "Window: %.0fd  Transit: %.1fd" % [prof.window_wait_days, prof.transit_days]
 			info_lbl.add_theme_font_size_override("font_size", 9)
 			info_lbl.add_theme_color_override("font_color", _DIM)
 			vbox.add_child(info_lbl)
 
 			if direct_ok:
 				var direct_btn := Button.new()
-				direct_btn.text = "Launch Direct (%.1fd, +cost)" % (prof.direct_transit_years * 365.25)
+				direct_btn.text = "Launch Direct (%.1fd, +cost)" % prof.direct_transit_days
 				direct_btn.add_theme_font_size_override("font_size", 9)
 				direct_btn.add_theme_color_override("font_color", _CYAN)
 				var cap2 := ship.id
@@ -363,16 +334,16 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 
 			var pb := ProgressBar.new()
 			pb.min_value = 0.0
-			var dur := maxf(0.001, ship.arrival_year - ship.mission_authorized_year)
+			var dur := maxf(0.001, ship.arrival_day - ship.mission_authorized_day)
 			pb.max_value = dur
-			pb.value = clampf(state.year - ship.mission_authorized_year, 0.0, dur)
+			pb.value = clampf(state.elapsed_days - ship.mission_authorized_day, 0.0, dur)
 			pb.custom_minimum_size = Vector2(0, 8)
 			vbox.add_child(pb)
 			refs["pb"] = pb
 
 			var eta := Label.new()
-			var days_left := maxf(0.0, ship.arrival_year - state.year) * 365.25
-			eta.text = "ETA ~%d  (%.0f days)" % [int(ship.arrival_year), days_left]
+			var days_left := maxf(0.0, ship.arrival_day - state.elapsed_days)
+			eta.text = "ETA %.0f days" % days_left
 			eta.add_theme_font_size_override("font_size", 9)
 			eta.add_theme_color_override("font_color", _DIM)
 			vbox.add_child(eta)
@@ -401,26 +372,22 @@ func _update_ship_row_progress(ship: Ship, state: SimulationState,
 	match ship.ship_state:
 		Ship.ShipState.BUILDING:
 			if pb:
-				var total := maxf(0.001, ship.build_complete_year - ship.build_start_year)
-				pb.value = clampf((state.year - ship.build_start_year) / total, 0.0, 1.0)
+				var total := maxf(0.001, ship.build_complete_day - ship.build_start_day)
+				pb.value = clampf((state.elapsed_days - ship.build_start_day) / total, 0.0, 1.0)
 			if eta:
-				var days_left := maxf(0.0, ship.build_complete_year - state.year) * 365.25
-				eta.text = "Ready in %.0f days (~%d)" % [days_left, int(ship.build_complete_year)]
+				var days_left := maxf(0.0, ship.build_complete_day - state.elapsed_days)
+				eta.text = "Ready in %.0f days" % days_left
 
 		Ship.ShipState.IN_TRANSIT:
 			if pb:
-				var dur := maxf(0.001, ship.arrival_year - ship.mission_authorized_year)
-				pb.value = clampf(state.year - ship.mission_authorized_year, 0.0, dur)
+				var dur := maxf(0.001, ship.arrival_day - ship.mission_authorized_day)
+				pb.value = clampf(state.elapsed_days - ship.mission_authorized_day, 0.0, dur)
 			if eta:
-				var days_left := maxf(0.0, ship.arrival_year - state.year) * 365.25
-				eta.text = "ETA ~%d  (%.0f days)" % [int(ship.arrival_year), days_left]
+				var days_left := maxf(0.0, ship.arrival_day - state.elapsed_days)
+				eta.text = "ETA %.0f days" % days_left
 
 
 func _option_name(option: String) -> String:
-	match option:
-		"launch_facility":       return "Launch Facility"
-		"space_launch_facility": return "Space Launch Facility"
-		"satellite":             return "Communications Satellite"
-		"lunar_transit_vehicle": return "Lunar Transit Vehicle"
-		"crewed_lunar_lander":   return "Crewed Lunar Lander"
-		_: return option.replace("_", " ").capitalize()
+	if option in STRUCTURE_OPTIONS:
+		return _struct_db.get_display_name(option)
+	return _ship_db.get_display_name(option)

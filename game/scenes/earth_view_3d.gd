@@ -8,9 +8,10 @@ const CLOUD_R   := 1.56
 const ATMO_R    := 1.63
 const ORBIT_SAT := 2.05
 const ORBIT_STN := 2.28
-const MOON_DIST := 14.0   # ~9× Earth radius — visually representative of actual distance
+const MOON_DIST := 90.0   # 60× Earth radius — true to scale (Moon ~384,000 km, Earth radius ~6,371 km)
 
-var _time        := 0.0
+var _time          := 0.0
+var _moon_angle_deg: float = 0.0   # driven by state.elapsed_days
 var _earth_root: Node3D
 var _cloud_root: Node3D
 var _city_lights: Array[Node3D] = []
@@ -27,6 +28,9 @@ var _rocket_root: Node3D
 
 var _launches: Array = []
 var _launch_timer := 0.0
+var _vp:         SubViewport      = null
+var _hover_ring: MeshInstance3D   = null
+var _label_list: Array[Label3D]   = []
 
 var _population       := 30.0
 var _completed:       Array = []
@@ -39,9 +43,10 @@ var _cam: Camera3D = null
 var _look_at: Vector3 = Vector3.ZERO
 var _cam_offset: Vector3 = Vector3(0.0, 3.2, 6.0)   # default viewing angle
 var _dragging: bool = false
+var _did_drag: bool = false
 
 const _CAM_DIST_MIN := 2.5
-const _CAM_DIST_MAX := 18.0
+const _CAM_DIST_MAX := 200.0
 const _PAN_SPEED    := 0.0035   # world units per pixel per unit of cam distance
 
 # Satellite orbit slots — [orbital_radius, y_start_deg, z_inclination_deg, y_speed_deg_per_sec]
@@ -97,12 +102,14 @@ const _CONTINENTS_UV: Array = [
 
 func _ready() -> void:
 	stretch = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_3d_world()
 	ScaleEngine.zone_changed.connect(_on_zone_changed)
 
 
 func _build_3d_world() -> void:
 	var vp := SubViewport.new()
+	_vp = vp
 	vp.size = Vector2i(720, 580)
 	vp.transparent_bg = true
 	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -140,6 +147,10 @@ func _build_3d_world() -> void:
 
 	_rocket_root = Node3D.new()
 	vp.add_child(_rocket_root)
+
+	_hover_ring = SceneUtil.make_orbit_ring(1.0, Color(0.70, 1.00, 1.00, 0.90), true)
+	_hover_ring.visible = false
+	vp.add_child(_hover_ring)
 
 
 func _build_earth() -> void:
@@ -257,73 +268,25 @@ func _build_distance_rings(vp: Node) -> void:
 	var ring_root := Node3D.new()
 	vp.add_child(ring_root)
 
-	# [radius_in_scene_units, label_text, alpha]
+	# [radius_in_scene_units, label_text]
 	var rings: Array[Array] = [
-		[2.50, "~500 km",        0.30],
-		[3.70, "~36,000 km",     0.22],
-		[MOON_DIST + 0.15, "~384,000 km", 0.18],
+		[2.50,             "500 km"],
+		[3.70,             "36,000 km"],
+		[MOON_DIST + 0.15, "384,000 km"],
 	]
 
 	for r_data: Array in rings:
-		var radius: float = r_data[0]
-		var label: String = r_data[1]
-		var alpha: float  = r_data[2]
-		_ring(ring_root, radius, Color(0.94, 0.90, 0.80, alpha), label)
+		_ring(ring_root, float(r_data[0]), Color(1.0, 1.0, 1.0, 0.5), str(r_data[1]))
 
 
 func _ring(parent: Node3D, radius: float, col: Color, label: String) -> void:
-	# Label sits at the 5-o'clock position on the ring: angle = TAU/6 in XZ
-	const GAP_ANGLE := TAU / 6.0
-	const GAP_HALF  := 0.22        # radians either side of label — cuts ring open
-	const SEG       := 128
-
-	var verts := PackedVector3Array()
-	var idx   := PackedInt32Array()
-	for i in SEG:
-		var a := float(i) / SEG * TAU
-		verts.append(Vector3(cos(a) * radius, 0.0, sin(a) * radius))
-	for i in SEG:
-		# Mid-angle of this segment — skip if inside the label gap
-		var a_mid := (float(i) + 0.5) / SEG * TAU
-		var diff  := fmod(a_mid - GAP_ANGLE, TAU)
-		if diff > PI:  diff -= TAU
-		if diff < -PI: diff += TAU
-		if absf(diff) < GAP_HALF:
-			continue
-		idx.append(i)
-		idx.append((i + 1) % SEG)
-
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_INDEX]  = idx
-
-	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_LINES, arrays)
-
-	# Normal transparent material — opaque objects (Earth, Moon) depth-test and
-	# naturally occlude the ring where they are in front. No depth tricks needed.
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = col
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mesh.surface_set_material(0, mat)
-
-	var inst := MeshInstance3D.new()
-	inst.mesh = mesh
-	parent.add_child(inst)
-
+	parent.add_child(SceneUtil.make_orbit_ring(radius, col))
 	if label != "":
-		var lbl := Label3D.new()
-		lbl.text = label
-		lbl.pixel_size = 0.004
-		lbl.font_size = 18
-		lbl.font = ThemeDB.fallback_font
-		lbl.modulate = col
-		lbl.position = Vector3(radius * 0.5, 0.06, radius * 0.866)
-		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		lbl.no_depth_test = false
+		var gap := TAU / 6.0
+		var lbl := SceneUtil.make_orbit_label(label, Color(1.0, 1.0, 1.0, 0.80), radius)
+		lbl.position = Vector3(cos(gap) * radius, 0.06, sin(gap) * radius)
 		parent.add_child(lbl)
+		_label_list.append(lbl)
 
 
 func _add_satellite(parent: Node3D) -> void:
@@ -479,6 +442,7 @@ func update_state(state: SimulationState) -> void:
 	_active_research = state.active_research
 	_moon_mission_active = state.moon_mission_active
 	_moon_landing    = state.milestone_flags.get("moon_landing", false)
+	_moon_angle_deg  = state.elapsed_days / 27.3 * 360.0
 
 	var visible_cities := int(clampf(_population / 8.0, 1, _city_lights.size()))
 	for i in _city_lights.size():
@@ -527,7 +491,11 @@ func _process(delta: float) -> void:
 			_sat_orbits[i].rotation_degrees.y += delta * (SAT_ORBIT_PARAMS[i] as Array)[3]
 	if _crew_orbit: _crew_orbit.rotation_degrees.y -= delta * 38.0
 	if _stn_orbit:  _stn_orbit.rotation_degrees.y  += delta * 22.0
-	if _moon_orbit: _moon_orbit.rotation_degrees.y += delta * 2.8
+	if _moon_orbit: _moon_orbit.rotation_degrees.y = _moon_angle_deg
+
+	_update_hover_ring()
+	if _cam and _label_list.size() > 0:
+		SceneUtil.update_labels(_label_list, _cam, float(_vp.size.y))
 
 	if _transit_craft and _transit_craft.visible and _moon_mesh:
 		var t := fmod(_time * 0.05, 1.0)
@@ -591,6 +559,45 @@ func _ll(lat: float, lon: float, radius: float) -> Vector3:
 	)
 
 
+
+func _update_hover_ring() -> void:
+	if not _cam or not _hover_ring:
+		return
+	var vp_size  := Vector2(_cam.get_viewport().size)
+	var mouse_vp := get_local_mouse_position() * vp_size / size
+	var best_pos  := Vector3.ZERO
+	var best_r    := 0.0
+	var best_dist := INF
+
+	if not _dragging:
+		# Moon — fixed pixel threshold (Moon is a small dot at cis-lunar scale)
+		if _moon_mesh:
+			var sp := _cam.unproject_position(_moon_mesh.global_position)
+			var d  := mouse_vp.distance_to(sp)
+			if d < 50.0 and d < best_dist:
+				best_dist = d
+				best_pos  = _moon_mesh.global_position
+				best_r    = 0.36 * 1.4   # Moon sphere radius * ring factor
+
+		# Earth — use projected screen radius so it scales with zoom
+		var earth_sp   := _cam.unproject_position(Vector3.ZERO)
+		var earth_edge := _cam.unproject_position(Vector3(EARTH_R, 0.0, 0.0))
+		var screen_r   := maxf(earth_sp.distance_to(earth_edge), 14.0)
+		var d_earth    := mouse_vp.distance_to(earth_sp)
+		if d_earth < screen_r * 1.5 and d_earth < best_dist:
+			best_pos = Vector3.ZERO
+			best_r   = EARTH_R * 1.35
+
+	if best_r > 0.0:
+		_hover_ring.position = best_pos
+		_hover_ring.scale    = Vector3.ONE * best_r
+		_hover_ring.visible  = true
+		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	else:
+		_hover_ring.visible = false
+		mouse_default_cursor_shape = Control.CURSOR_ARROW
+
+
 func _make_sphere(radius: float, radial: int, rings: int) -> SphereMesh:
 	var m := SphereMesh.new()
 	m.radius = radius; m.height = radius * 2.0
@@ -647,14 +654,18 @@ func _gui_input(event: InputEvent) -> void:
 					_zoom_by(1.15)
 					get_viewport().set_input_as_handled()
 			MOUSE_BUTTON_LEFT:
-				if event.pressed and event.double_click:
-					_try_focus_body(event.position)
+				if event.pressed:
+					_dragging = true
+					_did_drag = false
 				else:
-					_dragging = event.pressed
+					_dragging = false
+					if not _did_drag:
+						_try_click_body(event.position)
 			MOUSE_BUTTON_RIGHT:
 				if event.pressed:
 					_reset_camera()
 	elif event is InputEventMouseMotion and _dragging:
+		_did_drag = true
 		_pan(event.relative)
 
 
@@ -688,33 +699,28 @@ func _reset_camera() -> void:
 	_on_zone_changed(ScaleEngine.current_zone)
 
 
-func _try_focus_body(container_pos: Vector2) -> void:
+func _try_click_body(container_pos: Vector2) -> void:
 	if not _cam:
 		return
-	# Convert container-local position → SubViewport pixel space
 	var vp_size := Vector2(_cam.get_viewport().size)
 	var vp_pos  := container_pos * vp_size / size
 
+	# Moon click → transition to Moon local view
+	if _moon_mesh:
+		var moon_world := _moon_mesh.global_position
+		var moon_sp    := _cam.unproject_position(moon_world)
+		if vp_pos.distance_to(moon_sp) < 50.0:
+			ScaleEngine.select_body("Moon")
+			return
+
+	# Earth click → pan/zoom toward Earth
 	var dist := _cam_offset.length()
 	var dir  := _cam_offset.normalized()
-
-	# Earth (at world origin)
 	var earth_sp := _cam.unproject_position(Vector3.ZERO)
 	if vp_pos.distance_to(earth_sp) < 80.0:
 		_look_at    = Vector3.ZERO
 		_cam_offset = dir * clampf(dist * 0.4, _CAM_DIST_MIN, 4.0)
 		_update_camera()
-		return
-
-	# Moon
-	if _moon_mesh:
-		var moon_world := _moon_mesh.global_position
-		var moon_sp    := _cam.unproject_position(moon_world)
-		if vp_pos.distance_to(moon_sp) < 50.0:
-			_look_at    = Vector3(moon_world.x, 0.0, moon_world.z)
-			_cam_offset = dir * clampf(dist * 0.35, _CAM_DIST_MIN, 3.0)
-			_update_camera()
-
 
 func _update_camera() -> void:
 	if not _cam:

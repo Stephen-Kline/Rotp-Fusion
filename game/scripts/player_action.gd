@@ -15,6 +15,7 @@ enum Type {
 
 var type: int
 var payload: Dictionary
+var category: String  # subsystem routing hint: "economy", "research", "ships", "colony", "faction"
 
 
 func _init(p_type: int, p_payload: Dictionary = {}) -> void:

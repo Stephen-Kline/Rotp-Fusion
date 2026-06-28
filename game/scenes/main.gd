@@ -15,7 +15,9 @@ extends Node
 @onready var notification_panel: Control             = $UI/EarthView/NotificationPanel
 
 var _milestone1_shown: bool = false
-var _fleet_panel: FleetPanel = null
+var _fleet_panel:    FleetPanel = null
+var _solar_3d:       SubViewportContainer = null
+var _planet_view:    SubViewportContainer = null
 var _m_prev: bool = false
 var _f5_prev: bool = false
 
@@ -48,7 +50,30 @@ func _ready() -> void:
 	budget_panel.allocation_changed.connect(_on_allocation_changed)
 	faction_panel.spend_capital_requested.connect(_on_spend_capital)
 
+	# Generic planet local view (zone 1 for non-Earth bodies)
+	var pv_script := load("res://scenes/planet_view_3d.gd")
+	_planet_view = pv_script.new() as SubViewportContainer
+	_planet_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_planet_view.offset_top = 42.0
+	_planet_view.visible = false
+	$UI/EarthView.add_child(_planet_view)
+
+	# 3D solar system (zones 3-7)
+	var ss3d_script := load("res://scenes/solar_system_3d.gd")
+	_solar_3d = ss3d_script.new() as SubViewportContainer
+	_solar_3d.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_solar_3d.offset_top = 42.0   # below toolbar
+	_solar_3d.visible = false
+	$UI/EarthView.add_child(_solar_3d)
+	(_solar_3d as Object).connect("zone_transition_requested", _do_transition)
+
+	# Minimap must be the last child (highest Z) so its mouse events aren't eaten
+	# by the full-rect planet_view / solar_3d containers added above.
+	$UI/EarthView.move_child(minimap, $UI/EarthView.get_child_count() - 1)
+
 	ScaleEngine.zone_changed.connect(_on_zone_changed)
+	ScaleEngine.body_changed.connect(func(_b: String): _on_zone_changed(ScaleEngine.current_zone))
+	minimap.body_clicked.connect(_on_minimap_body_clicked)
 	solar_system.link_star_field(star_field)
 	solar_system.zone_transition_requested.connect(_do_transition)
 	EventSystem.time_slow_requested.connect(_on_time_slow)
@@ -81,7 +106,7 @@ func _ready() -> void:
 	earth_view.update_state(s)
 	minimap.update_state(s)
 	toolbar.refresh(s)
-	toolbar.apply_compression(Constants.CompressionLevel.PAUSED)
+	toolbar.apply_speed(Constants.SPEED_PAUSE)
 	budget_panel.refresh(s)
 	faction_panel.refresh(s)
 	tech_tree_panel.refresh(s)
@@ -124,24 +149,37 @@ func _on_tick(state: SimulationState) -> void:
 	if tech_tree_panel.visible:
 		tech_tree_panel.refresh(state)
 	solar_system.update_state(state)
+	if _solar_3d and _solar_3d.visible:
+		(_solar_3d as Object).call("update_state", state)
+	if _planet_view:
+		(_planet_view as Object).call("update_state", state)
 	if _fleet_panel.visible:
 		_fleet_panel.refresh(state)
 	if not _milestone1_shown and state.milestone_flags.get("moon_landing", false):
 		_milestone1_shown = true
-		victory_overlay.show_victory(int(state.year))
-	_check_speed_unlocks(state)
+		victory_overlay.show_victory(int(state.elapsed_days))
 
 
 func _on_zone_changed(zone: int) -> void:
-	var in_earth := zone <= 2
-	earth_view.visible = in_earth
-	minimap.visible    = in_earth
-	solar_system.visible = not in_earth
-	if in_earth:
+	var body       := ScaleEngine.current_body
+	var earth_body := body == "Earth" or body == ""
+	var in_solar3  := zone >= 3 and zone <= 7
+	var in_solar2  := zone >= 8
+
+	# Zone 1-2: Earth view OR generic planet view
+	earth_view.visible   = zone <= 2 and earth_body
+	minimap.visible      = zone <= 2
+	if _planet_view:
+		_planet_view.visible = zone == 1 and not earth_body
+
+	if _solar_3d:
+		_solar_3d.visible = in_solar3
+	solar_system.visible = in_solar2
+	star_field.visible   = zone <= 7 or in_solar2   # stars behind all views except pure galactic
+	if zone <= 2 and earth_body:
 		star_field.set_camera_offset(Vector2.ZERO)
 
 
-# Flash overlay and swap zone immediately — no coroutine, no stuck state.
 func _do_transition(to_zone: int) -> void:
 	if to_zone == ScaleEngine.current_zone:
 		return
@@ -153,33 +191,39 @@ func _do_transition(to_zone: int) -> void:
 	t.tween_callback(func(): fade_overlay.visible = false)
 
 
-func _on_speed_change(level: int) -> void:
-	game_loop.set_compression(level)
+func _on_speed_change(speed_index: int) -> void:
+	game_loop.set_speed(speed_index)
+	_set_views_paused(speed_index == Constants.SPEED_PAUSE)
 
 
 func _on_pause_requested() -> void:
 	game_loop.pause()
-	toolbar.apply_compression(Constants.CompressionLevel.PAUSED)
+	toolbar.apply_speed(Constants.SPEED_PAUSE)
+	_set_views_paused(true)
 
 
 func _on_time_slow() -> void:
-	game_loop.set_compression(Constants.CompressionLevel.SLOW)
-	toolbar.apply_compression(Constants.CompressionLevel.SLOW)
+	game_loop.set_speed(Constants.SPEED_1X)
+	toolbar.apply_speed(Constants.SPEED_1X)
+	_set_views_paused(false)
 
 
-# After the last queued notification is dismissed, auto-resume if we hard-stopped.
+func _on_minimap_body_clicked(body: String) -> void:
+	ScaleEngine.select_body(body)
+	_do_transition(1)
+
+
+func _set_views_paused(paused: bool) -> void:
+	if _solar_3d:
+		(_solar_3d as Object).set("_paused", paused)
+	if _planet_view:
+		(_planet_view as Object).set("_paused", paused)
+
+
 func _on_notification_dismissed() -> void:
 	if game_loop.is_paused():
-		game_loop.set_compression(Constants.CompressionLevel.SLOW)
-		toolbar.apply_compression(Constants.CompressionLevel.SLOW)
-
-
-func _check_speed_unlocks(state: SimulationState) -> void:
-	for level in Constants.K_UNLOCK:
-		var k_req: float = Constants.K_UNLOCK[level]
-		if state.kardashev_level >= k_req and not game_loop.can_use_speed(level):
-			game_loop.unlock_speed(level)
-			toolbar.unlock_speed(level)
+		game_loop.set_speed(Constants.SPEED_1X)
+		toolbar.apply_speed(Constants.SPEED_1X)
 
 
 func _on_allocation_changed(food: float, education: float, industry: float, energy: float) -> void:
@@ -204,5 +248,3 @@ func _on_build_ship(build_option: String) -> void:
 
 func _on_launch_ship(ship_id: String, destination: String, use_direct: bool) -> void:
 	game_loop.queue_action(PlayerAction.launch_ship(ship_id, destination, use_direct))
-
-

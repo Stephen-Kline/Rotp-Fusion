@@ -1,0 +1,142 @@
+{
+  "solar_bodies": [
+    {
+      "id": "Sol",
+      "type": "star",
+      "parent": null,
+      "orbital_au": 0.0,
+      "orbital_period_years": 0.0,
+      "radius_km": 695700,
+      "spectral_type": "G2V",
+      "moons": []
+    },
+    {
+      "id": "Mercury",
+      "type": "planet",
+      "parent": "Sol",
+      "orbital_au": 0.387,
+      "orbital_period_years": 0.24085,
+      "radius_km": 2439,
+      "moons": []
+    },
+    {
+      "id": "Venus",
+      "type": "planet",
+      "parent": "Sol",
+      "orbital_au": 0.723,
+      "orbital_period_years": 0.61520,
+      "radius_km": 6051,
+      "moons": []
+    },
+    {
+      "id": "Earth",
+      "type": "planet",
+      "parent": "Sol",
+      "orbital_au": 1.000,
+      "orbital_period_years": 1.00000,
+      "radius_km": 6371,
+      "moons": [
+        {"id": "Moon", "orbital_km": 384400, "period_days": 27.321}
+      ]
+    },
+    {
+      "id": "Mars",
+      "type": "planet",
+      "parent": "Sol",
+      "orbital_au": 1.524,
+      "orbital_period_years": 1.88085,
+      "radius_km": 3389,
+      "moons": [
+        {"id": "Phobos", "orbital_km": 9376,  "period_days": 0.319},
+        {"id": "Deimos", "orbital_km": 23460, "period_days": 1.263}
+      ]
+    },
+    {
+      "id": "Ceres",
+      "type": "dwarf_planet",
+      "parent": "Sol",
+      "orbital_au": 2.770,
+      "orbital_period_years": 4.60700,
+      "radius_km": 473,
+      "moons": []
+    },
+    {
+      "id": "Jupiter",
+      "type": "planet",
+      "parent": "Sol",
+      "orbital_au": 5.203,
+      "orbital_period_years": 11.86200,
+      "radius_km": 71492,
+      "moons": [
+        {"id": "Io",       "orbital_km": 421800, "period_days":  1.769},
+        {"id": "Europa",   "orbital_km": 671100, "period_days":  3.551},
+        {"id": "Ganymede", "orbital_km": 1070400,"period_days":  7.155},
+        {"id": "Callisto", "orbital_km": 1882700,"period_days": 16.690}
+      ]
+    },
+    {
+      "id": "Saturn",
+      "type": "planet",
+      "parent": "Sol",
+      "orbital_au": 9.537,
+      "orbital_period_years": 29.45700,
+      "radius_km": 60268,
+      "moons": [
+        {"id": "Mimas",     "orbital_km": 185520, "period_days":  0.942},
+        {"id": "Enceladus", "orbital_km": 238020, "period_days":  1.370},
+        {"id": "Titan",     "orbital_km": 1221870,"period_days": 15.950}
+      ]
+    },
+    {
+      "id": "Uranus",
+      "type": "planet",
+      "parent": "Sol",
+      "orbital_au": 19.191,
+      "orbital_period_years": 84.01100,
+      "radius_km": 25559,
+      "moons": [
+        {"id": "Miranda", "orbital_km": 129900, "period_days":  1.413},
+        {"id": "Titania", "orbital_km": 436300, "period_days":  8.706},
+        {"id": "Oberon",  "orbital_km": 583500, "period_days": 13.463}
+      ]
+    },
+    {
+      "id": "Neptune",
+      "type": "planet",
+      "parent": "Sol",
+      "orbital_au": 30.069,
+      "orbital_period_years": 164.80000,
+      "radius_km": 24764,
+      "moons": [
+        {"id": "Triton", "orbital_km": 354800, "period_days": -5.877}
+      ]
+    },
+    {
+      "id": "Pluto",
+      "type": "dwarf_planet",
+      "parent": "Sol",
+      "orbital_au": 39.480,
+      "orbital_period_years": 247.94000,
+      "radius_km": 1188,
+      "moons": [
+        {"id": "Charon", "orbital_km": 19591, "period_days": 6.387}
+      ]
+    }
+  ],
+  "nearby_stars": [
+    {"id": "Alpha Centauri", "x_ly": -1.66, "z_ly": -3.91, "spectral_type": "G2V+K1V", "distance_ly": 4.37},
+    {"id": "Proxima Cen",    "x_ly": -1.53, "z_ly": -3.98, "spectral_type": "M5.5Ve",  "distance_ly": 4.24},
+    {"id": "Barnard's Star", "x_ly":  0.33, "z_ly":  5.97, "spectral_type": "M4Ve",    "distance_ly": 5.96},
+    {"id": "Wolf 359",       "x_ly": -7.60, "z_ly":  1.70, "spectral_type": "M6Ve",    "distance_ly": 7.86},
+    {"id": "Lalande 21185",  "x_ly":  1.14, "z_ly":  8.22, "spectral_type": "M2Ve",    "distance_ly": 8.29},
+    {"id": "Sirius",         "x_ly":  4.40, "z_ly": -7.34, "spectral_type": "A1Vm",    "distance_ly": 8.58},
+    {"id": "Luyten 726-8",   "x_ly": -8.55, "z_ly":  1.79, "spectral_type": "M5.5Ve",  "distance_ly": 8.73},
+    {"id": "Ross 154",       "x_ly": -1.63, "z_ly":  9.56, "spectral_type": "M3.5Ve",  "distance_ly": 9.68},
+    {"id": "Eps Eridani",    "x_ly": -9.20, "z_ly": -4.96, "spectral_type": "K2Ve",    "distance_ly": 10.49},
+    {"id": "Ross 248",       "x_ly":  3.91, "z_ly": -9.65, "spectral_type": "M6Ve",    "distance_ly": 10.30},
+    {"id": "61 Cygni",       "x_ly":  2.67, "z_ly": 11.12, "spectral_type": "K5Ve+K7Ve","distance_ly": 11.40},
+    {"id": "Procyon",        "x_ly":  7.99, "z_ly": -8.38, "spectral_type": "F5IV-V",  "distance_ly": 11.46},
+    {"id": "Eps Indi",       "x_ly": -3.98, "z_ly":-10.47, "spectral_type": "K5Ve",    "distance_ly": 11.82},
+    {"id": "Tau Ceti",       "x_ly": -7.18, "z_ly": -9.20, "spectral_type": "G8Vp",    "distance_ly": 11.91}
+  ]
+}
