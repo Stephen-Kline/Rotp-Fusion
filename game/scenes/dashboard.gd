@@ -15,4 +15,4 @@ func refresh(state: SimulationState) -> void:
 
 	var low_power := state.energy_capacity < 0.3
 	_power_warning.visible = low_power
-	_power_label.modulate = Color(1.0, 0.35, 0.35) if low_power else Color(1.0, 1.0, 1.0)
+	_power_label.modulate = UIUtil.COL_ERROR if low_power else Color.WHITE

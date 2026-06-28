@@ -496,7 +496,7 @@ func _ring_label(moon_name: String, dist: float) -> Label3D:
 	var km  := dist * (6371.0 / 1.5)
 	var gap := TAU / 6.0
 	var lbl := SceneUtil.make_orbit_label(
-		moon_name + "\n" + _fmt_km(km), Color(0.72, 0.85, 1.00, 0.90), dist)
+		moon_name + "\n" + UIUtil.fmt_km(km), Color(0.72, 0.85, 1.00, 0.90), dist)
 	lbl.position = Vector3(cos(gap) * dist, dist * 0.06, sin(gap) * dist)
 	return lbl
 
@@ -506,15 +506,6 @@ func _ref_label(text: String, dist: float) -> Label3D:
 	var lbl := SceneUtil.make_orbit_label(text, Color(1.00, 0.90, 0.40, 0.92), dist)
 	lbl.position = Vector3(cos(gap) * dist, dist * 0.06, sin(gap) * dist)
 	return lbl
-
-
-func _fmt_km(km: float) -> String:
-	if km >= 1_000_000.0:
-		return "%.2f M km" % (km / 1_000_000.0)
-	var k := int(km)
-	if k >= 1000:
-		return "%d,%03d km" % [k / 1000, k % 1000]
-	return "%d km" % k
 
 
 func _flat_ring(inner_r: float, outer_r: float, col: Color) -> MeshInstance3D:

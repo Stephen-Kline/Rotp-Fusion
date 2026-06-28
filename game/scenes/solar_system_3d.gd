@@ -222,7 +222,7 @@ func _build_solar_system() -> void:
 
 		var gap      := TAU / 6.0
 		var ring     := SceneUtil.make_orbit_ring(au, Color(1.0, 1.0, 1.0, 0.5))
-		var ring_lbl := SceneUtil.make_orbit_label(_fmt_au(au), Color(1.0, 1.0, 1.0, 0.70), au)
+		var ring_lbl := SceneUtil.make_orbit_label(UIUtil.fmt_au(au), Color(1.0, 1.0, 1.0, 0.70), au)
 		ring_lbl.position = Vector3(cos(gap) * au, 0.02, sin(gap) * au)
 		_scene_root.add_child(ring)
 		_orbit_rings.append(ring)
@@ -535,10 +535,6 @@ func _update_camera() -> void:
 	)
 	_cam.position = _pan + offset
 	_cam.look_at(_pan, Vector3.UP)
-
-
-func _fmt_au(au: float) -> String:
-	return "%.3f AU" % au if au < 10.0 else "%.1f AU" % au
 
 
 func _min_ring_world_r(min_px: float) -> float:

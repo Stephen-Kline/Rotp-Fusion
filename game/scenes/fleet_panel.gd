@@ -5,14 +5,6 @@ signal build_structure_requested(structure_type: String, body: String)
 signal build_ship_requested(build_option: String)
 signal launch_ship_requested(ship_id: String, destination: String, use_direct: bool)
 
-const _NAVY  := Color(0.06, 0.10, 0.22)
-const _ORANGE:= Color(0.92, 0.48, 0.12)
-const _CREAM := Color(0.94, 0.90, 0.80)
-const _CYAN  := Color(0.20, 0.82, 0.90)
-const _DIM   := Color(0.38, 0.45, 0.58)
-const _GREEN := Color(0.30, 0.85, 0.40)
-const _WARN  := Color(1.00, 0.28, 0.10)
-
 const DEST_IDS    := ["moon", "l2"]
 const DEST_LABELS := {"moon": "Moon", "l2": "Earth-Moon L2"}
 const STRUCTURE_OPTIONS := ["launch_facility", "space_launch_facility"]
@@ -31,25 +23,18 @@ func _ready() -> void:
 	_ship_db = ShipDB.new()
 	_struct_db = StructureDB.new()
 
-	var bg := StyleBoxFlat.new()
-	bg.bg_color = Color(_NAVY.r, _NAVY.g, _NAVY.b, 0.96)
-	bg.border_width_left = 1
-	bg.border_color = Color(_CREAM.r, _CREAM.g, _CREAM.b, 0.12)
-	add_theme_stylebox_override("panel", bg)
+	add_theme_stylebox_override("panel",
+		UIUtil.panel_style(Color(UIUtil.COL_NAVY.r, UIUtil.COL_NAVY.g, UIUtil.COL_NAVY.b, 0.96),
+		Color(UIUtil.COL_CREAM.r, UIUtil.COL_CREAM.g, UIUtil.COL_CREAM.b, 0.12), 1))
 
-	var outer := VBoxContainer.new()
+	var outer := UIUtil.make_vbox(0)
 	outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	outer.add_theme_constant_override("separation", 0)
 	add_child(outer)
 
-	var header_row := HBoxContainer.new()
-	header_row.add_theme_constant_override("separation", 0)
+	var header_row := UIUtil.make_hbox(0)
 	outer.add_child(header_row)
 
-	var title := Label.new()
-	title.text = "  MISSION CONTROL"
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", _ORANGE)
+	var title := UIUtil.make_label("  MISSION CONTROL", 12, UIUtil.COL_ORANGE)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.custom_minimum_size = Vector2(0, 34)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -59,7 +44,7 @@ func _ready() -> void:
 	close_btn.text = "✕"
 	close_btn.flat = true
 	close_btn.add_theme_font_size_override("font_size", 11)
-	close_btn.add_theme_color_override("font_color", _DIM)
+	close_btn.add_theme_color_override("font_color", UIUtil.COL_DIM)
 	close_btn.custom_minimum_size = Vector2(28, 0)
 	close_btn.pressed.connect(hide)
 	header_row.add_child(close_btn)
@@ -71,35 +56,24 @@ func _ready() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	outer.add_child(scroll)
 
-	var body := VBoxContainer.new()
+	var body := UIUtil.make_vbox(6)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 6)
 	var pad := StyleBoxEmpty.new()
 	pad.content_margin_left = 8; pad.content_margin_right = 8
 	pad.content_margin_top = 6; pad.content_margin_bottom = 6
 	body.add_theme_stylebox_override("panel", pad)
 	scroll.add_child(body)
 
-	var build_lbl := Label.new()
-	build_lbl.text = "BUILD"
-	build_lbl.add_theme_font_size_override("font_size", 10)
-	build_lbl.add_theme_color_override("font_color", _DIM)
-	body.add_child(build_lbl)
+	body.add_child(UIUtil.make_label("BUILD", 10, UIUtil.COL_DIM))
 
-	_build_section = VBoxContainer.new()
-	_build_section.add_theme_constant_override("separation", 4)
+	_build_section = UIUtil.make_vbox(4)
 	body.add_child(_build_section)
 
 	body.add_child(HSeparator.new())
 
-	var fleet_lbl := Label.new()
-	fleet_lbl.text = "FLEET"
-	fleet_lbl.add_theme_font_size_override("font_size", 10)
-	fleet_lbl.add_theme_color_override("font_color", _DIM)
-	body.add_child(fleet_lbl)
+	body.add_child(UIUtil.make_label("FLEET", 10, UIUtil.COL_DIM))
 
-	_fleet_section = VBoxContainer.new()
-	_fleet_section.add_theme_constant_override("separation", 8)
+	_fleet_section = UIUtil.make_vbox(8)
 	body.add_child(_fleet_section)
 
 
@@ -113,11 +87,7 @@ func _refresh_build(state: SimulationState) -> void:
 		c.queue_free()
 
 	if state.available_build_options.is_empty():
-		var lbl := Label.new()
-		lbl.text = "No options available"
-		lbl.add_theme_font_size_override("font_size", 10)
-		lbl.add_theme_color_override("font_color", _DIM)
-		_build_section.add_child(lbl)
+		_build_section.add_child(UIUtil.make_label("No options available", 10, UIUtil.COL_DIM))
 		return
 
 	var earth_structs: Array = state.structures.get("earth", [])
@@ -136,20 +106,15 @@ func _refresh_build(state: SimulationState) -> void:
 			and state.energy_stockpile >= nrg
 		var prereq_ok: bool = is_struct or has_facility
 
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 4)
+		var row := UIUtil.make_hbox(4)
 		_build_section.add_child(row)
 
-		var col := VBoxContainer.new()
+		var col := UIUtil.make_vbox(0)
 		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		col.add_theme_constant_override("separation", 0)
 		row.add_child(col)
 
-		var name_lbl := Label.new()
-		name_lbl.text = _option_name(option)
-		name_lbl.add_theme_font_size_override("font_size", 10)
-		name_lbl.add_theme_color_override("font_color", _CREAM if can_afford else _DIM)
-		col.add_child(name_lbl)
+		col.add_child(UIUtil.make_label(_option_name(option), 10,
+			UIUtil.COL_CREAM if can_afford else UIUtil.COL_DIM))
 
 		var cost_parts: Array = []
 		if mat > 0.0:
@@ -158,11 +123,8 @@ func _refresh_build(state: SimulationState) -> void:
 			cost_parts.append(ResourceHelpers.format_si(nrg, "J"))
 		if build_days > 0.0:
 			cost_parts.append("%.0fd" % build_days)
-		var cost_lbl := Label.new()
-		cost_lbl.text = "  ".join(cost_parts)
-		cost_lbl.add_theme_font_size_override("font_size", 9)
-		cost_lbl.add_theme_color_override("font_color", _WARN if not can_afford else _DIM)
-		col.add_child(cost_lbl)
+		col.add_child(UIUtil.make_label("  ".join(cost_parts), 9,
+			UIUtil.COL_WARN if not can_afford else UIUtil.COL_DIM))
 
 		var btn := Button.new()
 		btn.text = "Build"
@@ -193,10 +155,7 @@ func _refresh_fleet(state: SimulationState) -> void:
 
 	if state.ships.is_empty():
 		if not _fleet_section.has_meta("empty_label"):
-			var lbl := Label.new()
-			lbl.text = "No ships"
-			lbl.add_theme_font_size_override("font_size", 10)
-			lbl.add_theme_color_override("font_color", _DIM)
+			var lbl := UIUtil.make_label("No ships", 10, UIUtil.COL_DIM)
 			_fleet_section.add_child(lbl)
 			_fleet_section.set_meta("empty_label", lbl)
 		return
@@ -218,18 +177,13 @@ func _refresh_fleet(state: SimulationState) -> void:
 
 
 func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 3)
+	var vbox := UIUtil.make_vbox(3)
 	_fleet_section.add_child(vbox)
 
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 6)
+	var header := UIUtil.make_hbox(6)
 	vbox.add_child(header)
 
-	var name_lbl := Label.new()
-	name_lbl.text = ship.label if ship.label != "" else "Ship"
-	name_lbl.add_theme_font_size_override("font_size", 11)
-	name_lbl.add_theme_color_override("font_color", _CREAM)
+	var name_lbl := UIUtil.make_label(ship.label if ship.label != "" else "Ship", 11, UIUtil.COL_CREAM)
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(name_lbl)
 
@@ -237,18 +191,14 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 	status_lbl.add_theme_font_size_override("font_size", 10)
 	header.add_child(status_lbl)
 
-	var prop_lbl := Label.new()
-	prop_lbl.text = PropulsionData.tier_name(ship.propulsion_tier)
-	prop_lbl.add_theme_font_size_override("font_size", 9)
-	prop_lbl.add_theme_color_override("font_color", _DIM)
-	vbox.add_child(prop_lbl)
+	vbox.add_child(UIUtil.make_label(PropulsionData.tier_name(ship.propulsion_tier), 9, UIUtil.COL_DIM))
 
 	var refs := {"vbox": vbox, "pb": null, "eta": null}
 
 	match ship.ship_state:
 		Ship.ShipState.BUILDING:
 			status_lbl.text = "Building"
-			status_lbl.add_theme_color_override("font_color", _DIM)
+			status_lbl.add_theme_color_override("font_color", UIUtil.COL_DIM)
 
 			var pb := ProgressBar.new()
 			pb.min_value = 0.0
@@ -259,23 +209,20 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			vbox.add_child(pb)
 			refs["pb"] = pb
 
-			var eta := Label.new()
-			var days_left := maxf(0.0, ship.build_complete_day - state.elapsed_days)
-			eta.text = "Ready in %.0f days" % days_left
-			eta.add_theme_font_size_override("font_size", 9)
-			eta.add_theme_color_override("font_color", _DIM)
+			var eta := UIUtil.make_label(
+				"Ready in %.0f days" % maxf(0.0, ship.build_complete_day - state.elapsed_days),
+				9, UIUtil.COL_DIM)
 			vbox.add_child(eta)
 			refs["eta"] = eta
 
 		Ship.ShipState.AWAITING_WINDOW:
 			status_lbl.text = "Ready ✓"
-			status_lbl.add_theme_color_override("font_color", _GREEN)
+			status_lbl.add_theme_color_override("font_color", UIUtil.COL_GREEN)
 
 			if ship.id not in _ship_destinations:
 				_ship_destinations[ship.id] = "moon"
 
-			var dest_row := HBoxContainer.new()
-			dest_row.add_theme_constant_override("separation", 4)
+			var dest_row := UIUtil.make_hbox(4)
 			vbox.add_child(dest_row)
 
 			var dest_opt := OptionButton.new()
@@ -308,17 +255,15 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			var prof := FlightPlanner.plan(
 				ship.origin_body, dest_str, state.elapsed_days, ship.propulsion_tier, direct_ok)
 
-			var info_lbl := Label.new()
-			info_lbl.text = "Window: %.0fd  Transit: %.1fd" % [prof.window_wait_days, prof.transit_days]
-			info_lbl.add_theme_font_size_override("font_size", 9)
-			info_lbl.add_theme_color_override("font_color", _DIM)
-			vbox.add_child(info_lbl)
+			vbox.add_child(UIUtil.make_label(
+				"Window: %.0fd  Transit: %.1fd" % [prof.window_wait_days, prof.transit_days],
+				9, UIUtil.COL_DIM))
 
 			if direct_ok:
 				var direct_btn := Button.new()
 				direct_btn.text = "Launch Direct (%.1fd, +cost)" % prof.direct_transit_days
 				direct_btn.add_theme_font_size_override("font_size", 9)
-				direct_btn.add_theme_color_override("font_color", _CYAN)
+				direct_btn.add_theme_color_override("font_color", UIUtil.COL_CYAN)
 				var cap2 := ship.id
 				direct_btn.pressed.connect(func():
 					var dest: String = _ship_destinations.get(cap2, "moon")
@@ -330,7 +275,7 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			var dest_name: String = DEST_LABELS.get(ship.destination_body,
 				ship.destination_body.capitalize())
 			status_lbl.text = "→ %s" % dest_name
-			status_lbl.add_theme_color_override("font_color", _CYAN)
+			status_lbl.add_theme_color_override("font_color", UIUtil.COL_CYAN)
 
 			var pb := ProgressBar.new()
 			pb.min_value = 0.0
@@ -341,11 +286,9 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			vbox.add_child(pb)
 			refs["pb"] = pb
 
-			var eta := Label.new()
-			var days_left := maxf(0.0, ship.arrival_day - state.elapsed_days)
-			eta.text = "ETA %.0f days" % days_left
-			eta.add_theme_font_size_override("font_size", 9)
-			eta.add_theme_color_override("font_color", _DIM)
+			var eta := UIUtil.make_label(
+				"ETA %.0f days" % maxf(0.0, ship.arrival_day - state.elapsed_days),
+				9, UIUtil.COL_DIM)
 			vbox.add_child(eta)
 			refs["eta"] = eta
 
@@ -353,12 +296,8 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			var dest_name: String = DEST_LABELS.get(ship.destination_body,
 				ship.destination_body.capitalize())
 			status_lbl.text = "Arrived"
-			status_lbl.add_theme_color_override("font_color", _GREEN)
-			var at_lbl := Label.new()
-			at_lbl.text = "At %s" % dest_name
-			at_lbl.add_theme_font_size_override("font_size", 9)
-			at_lbl.add_theme_color_override("font_color", _DIM)
-			vbox.add_child(at_lbl)
+			status_lbl.add_theme_color_override("font_color", UIUtil.COL_GREEN)
+			vbox.add_child(UIUtil.make_label("At %s" % dest_name, 9, UIUtil.COL_DIM))
 
 	vbox.add_child(HSeparator.new())
 	return refs

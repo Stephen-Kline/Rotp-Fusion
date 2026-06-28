@@ -31,9 +31,7 @@ var _updating: bool = false
 
 
 func _ready() -> void:
-	var bg := StyleBoxFlat.new()
-	bg.bg_color = Color(0.06, 0.10, 0.22)
-	add_theme_stylebox_override("panel", bg)
+	add_theme_stylebox_override("panel", UIUtil.panel_style(UIUtil.COL_NAVY))
 
 	_energy_slider.value_changed.connect(_on_slider_changed.bind("energy"))
 	_food_slider.value_changed.connect(_on_slider_changed.bind("food"))
@@ -54,7 +52,7 @@ func refresh(state: SimulationState) -> void:
 	# Outcome values — live SI-formatted production rates
 	var low_energy := state.energy_capacity < 0.15
 	_energy_outcome.text = _RH.format_si(state.energy_rate, "J")
-	_energy_outcome.modulate = Color(1.0, 0.35, 0.35) if low_energy else Color(1, 1, 1, 1)
+	_energy_outcome.modulate = UIUtil.COL_ERROR if low_energy else Color.WHITE
 
 	_food_outcome.text      = _RH.format_si(state.consumables_rate, "cal")
 	_education_outcome.text = _RH.format_si(state.knowledge_rate,   "bits")

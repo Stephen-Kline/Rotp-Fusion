@@ -33,28 +33,28 @@ func refresh(state: SimulationState) -> void:
 
 	if gsa_founded:
 		_status_label.text = "GSA Founded"
-		_status_label.modulate = Color(0.2, 0.9, 0.2)
+		_status_label.modulate = UIUtil.COL_SUCCESS
 		_establish_btn.hide()
 		_bonus_label.text = "Research rate bonus: +30%%"
 		_bonus_label.show()
 	elif threshold_met and not gsa_queued:
 		_status_label.text = "Conditions Met — Establish GSA"
-		_status_label.modulate = Color(1.0, 0.9, 0.1)
+		_status_label.modulate = UIUtil.COL_AMBER
 		_establish_btn.show()
 		_bonus_label.hide()
 	elif threshold_met and gsa_queued:
 		_status_label.text = "GSA Founding In Progress..."
-		_status_label.modulate = Color(1.0, 0.9, 0.1)
+		_status_label.modulate = UIUtil.COL_AMBER
 		_establish_btn.hide()
 		_bonus_label.hide()
 	elif expanded_done:
 		_status_label.text = "Not Founded (need 3 factions ≥50)"
-		_status_label.modulate = Color(0.6, 0.6, 0.6)
+		_status_label.modulate = UIUtil.COL_MUTED
 		_establish_btn.hide()
 		_bonus_label.hide()
 	else:
 		_status_label.text = "Not Founded"
-		_status_label.modulate = Color(0.6, 0.6, 0.6)
+		_status_label.modulate = UIUtil.COL_MUTED
 		_establish_btn.hide()
 		_bonus_label.hide()
 
