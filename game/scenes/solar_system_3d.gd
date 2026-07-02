@@ -1,5 +1,7 @@
 extends SubViewportContainer
 # 3D space map: zones 3-5 (solar system, AU scale), 6-7 (nearby stars, ly scale).
+
+const _OM = preload("res://scripts/orbital_mechanics.gd")
 # Fixed 28° elevation camera with pan and zoom. No orbit/tilt.
 
 signal zone_transition_requested(zone: int)
@@ -59,12 +61,9 @@ var _pan_origin:  Vector3 = Vector3.ZERO
 var _did_drag:    bool    = false
 
 var _elapsed_days: float = 0.0
-var _anim_days:    float = 0.0
 var _current_zone: int   = 3
 var _ships_data:   Array = []
 var _paused:       bool  = false
-
-const VISUAL_RATE := 0.9375  # 0.75 × 1.25 — Earth orbits in ~6.4 min when running
 
 # Scene objects (rebuilt per zone regime)
 var _sun_mesh:     MeshInstance3D = null
@@ -76,6 +75,12 @@ var _ship_nodes:   Array = []   # {mi, label, ship}
 var _hover_ring:      MeshInstance3D = null
 var _selection_ring:  MeshInstance3D = null
 var _orbit_ring_labels: Array = []   # Label3D nodes, parented to orbit rings
+var _hover_name:      String = ""
+
+const _ARC_STEPS     := 64       # polyline resolution for trajectory arcs
+const _COL_SHIP      := Color(0.95, 0.82, 0.20, 1.00)   # amber — ship dot
+const _COL_ARC_DIM   := Color(0.95, 0.82, 0.20, 0.15)   # remaining arc
+const _COL_ARC_TRAIL := Color(0.95, 0.82, 0.20, 0.55)   # trail already flown
 
 
 func _ready() -> void:
@@ -147,7 +152,6 @@ func _on_zone_changed(zone: int) -> void:
 	_clear_scene()
 
 	if zone <= 5:
-		_anim_days = _elapsed_days   # start from current game time, then animate forward
 		_build_solar_system()
 		match zone:
 			3: _cam_dist = 2.5;  _pan = Vector3.ZERO
@@ -199,7 +203,7 @@ func _build_solar_system() -> void:
 	# Sun label (stored in planet_nodes so label overlay updates it)
 	var sun_lbl := _make_label("Sol")
 	sun_lbl.set_meta("body", "Sol")
-	sun_lbl.add_theme_color_override("font_color", Color(1.0, 0.92, 0.35, 0.90))
+	sun_lbl.add_theme_color_override("font_color", Color.WHITE)
 	sun_lbl.gui_input.connect(_on_label_input.bind("Sol"))
 	_planet_nodes.append({"mi": _sun_mesh, "au": 0.0, "period": 1.0,
 			"ang0": 0.0, "name": "Sol", "label": sun_lbl, "radius": SUN_RADIUS})
@@ -221,8 +225,8 @@ func _build_solar_system() -> void:
 		var radius: float  = p[5]
 
 		var gap      := TAU / 6.0
-		var ring     := SceneUtil.make_orbit_ring(au, Color(1.0, 1.0, 1.0, 0.5))
-		var ring_lbl := SceneUtil.make_orbit_label(UIUtil.fmt_au(au), Color(1.0, 1.0, 1.0, 0.70), au)
+		var ring     := SceneUtil.make_orbit_ring(au, Color(1.0, 1.0, 1.0, 0.25))
+		var ring_lbl := SceneUtil.make_orbit_label(UIUtil.fmt_au(au), Color.WHITE, au)
 		ring_lbl.position = Vector3(cos(gap) * au, 0.02, sin(gap) * au)
 		_scene_root.add_child(ring)
 		_orbit_rings.append(ring)
@@ -252,7 +256,7 @@ func _update_planet_positions() -> void:
 		var au:     float = entry["au"]
 		var period: float = entry["period"]
 		var ang0:   float = entry["ang0"]
-		var angle := deg_to_rad(ang0 + (360.0 / period) * (_anim_days / 365.25))
+		var angle := deg_to_rad(ang0 + (360.0 / period) * (_elapsed_days / 365.25))
 		var pos := Vector3(cos(angle) * au, 0.0, sin(angle) * au)
 		(entry["mi"] as MeshInstance3D).position = pos
 
@@ -282,7 +286,9 @@ func _build_star_map() -> void:
 
 func _clear_ship_nodes() -> void:
 	for entry in _ship_nodes:
-		(entry["mi"] as MeshInstance3D).queue_free()
+		(entry["mi"]       as MeshInstance3D).queue_free()
+		(entry["arc_mi"]   as MeshInstance3D).queue_free()
+		(entry["trail_mi"] as MeshInstance3D).queue_free()
 		if entry["label"]: (entry["label"] as Label).queue_free()
 	_ship_nodes.clear()
 
@@ -293,33 +299,99 @@ func _update_dynamic_objects() -> void:
 
 	_update_planet_positions()
 
-	# Sync ship count
-	var in_transit_ships: Array = []
-	for ship in _ships_data:
-		if (ship as Ship).ship_state == Ship.ShipState.IN_TRANSIT:
-			in_transit_ships.append(ship)
+	# Ships visible in solar view: in-flight or orbiting
+	var visible_ships: Array = []
+	for s in _ships_data:
+		var ship := s as Ship
+		if ship.ship_state == Ship.ShipState.IN_TRANSIT \
+				or ship.ship_state == Ship.ShipState.ORBITING:
+			visible_ships.append(ship)
 
-	# Rebuild ship nodes if count changed
-	if _ship_nodes.size() != in_transit_ships.size():
+	# Rebuild node list when the visible set changes
+	var needs_rebuild := _ship_nodes.size() != visible_ships.size()
+	if not needs_rebuild:
+		for i in _ship_nodes.size():
+			if (_ship_nodes[i]["ship"] as Ship) != visible_ships[i]:
+				needs_rebuild = true
+				break
+
+	if needs_rebuild:
 		_clear_ship_nodes()
-		for ship in in_transit_ships:
-			var mi := _sphere(0.003, Color(0.85, 0.85, 0.30), true)
-			_scene_root.add_child(mi)
-			var lbl := _make_label((ship as Ship).label)
-			_ship_nodes.append({"mi": mi, "label": lbl, "ship": ship})
+		for s in visible_ships:
+			var ship := s as Ship
+			var dot        := _sphere(0.003, _COL_SHIP, true)
+			var arc_mi     := _line_mi(_COL_ARC_DIM)
+			var trail_mi   := _line_mi(_COL_ARC_TRAIL)
+			_scene_root.add_child(dot)
+			_scene_root.add_child(arc_mi)
+			_scene_root.add_child(trail_mi)
+			var lbl := _make_label(ship.label)
+			_ship_nodes.append({
+				"mi": dot, "arc_mi": arc_mi, "trail_mi": trail_mi,
+				"label": lbl, "ship": ship,
+				"arc_mat":   arc_mi.get_meta("mat"),
+				"trail_mat": trail_mi.get_meta("mat"),
+			})
 
-	# Update ship positions
+	# Update positions and arcs each frame
 	for i in _ship_nodes.size():
 		var ship: Ship = _ship_nodes[i]["ship"]
-		var orig_pos := _body_pos_au(ship.origin_body)
-		var dest_pos := _body_pos_au(ship.destination_body)
-		var dur: float = ship.arrival_day - ship.departure_day
-		var t: float = 0.0
-		if dur > 0.0:
-			t = clampf((_elapsed_days - ship.departure_day) / dur, 0.0, 1.0)
-		(_ship_nodes[i]["mi"] as MeshInstance3D).position = orig_pos.lerp(dest_pos, t)
+		var pos := _ship_solar_pos(ship)
+		(_ship_nodes[i]["mi"] as MeshInstance3D).position = pos
+		_update_ship_arc(_ship_nodes[i], ship)
 
 	_update_label_positions()
+
+
+# 3D position of the ship in solar-view AU coordinates.
+func _ship_solar_pos(ship: Ship) -> Vector3:
+	match ship.ship_state:
+		Ship.ShipState.IN_TRANSIT:
+			if not ship.is_local:
+				return ship.position_at(_elapsed_days)
+			# Local (moon) transfer: cluster near parent planet
+			return _body_pos_au(ship.origin_body)
+		Ship.ShipState.ORBITING:
+			return _body_pos_au(ship.origin_body)
+	return Vector3.ZERO
+
+
+# Rebuild arc + trail line meshes for this ship node.
+func _update_ship_arc(entry: Dictionary, ship: Ship) -> void:
+	var arc_mi:   MeshInstance3D = entry["arc_mi"]
+	var trail_mi: MeshInstance3D = entry["trail_mi"]
+
+	# Only solar IN_TRANSIT ships get arc rendering
+	if ship.ship_state != Ship.ShipState.IN_TRANSIT or ship.is_local \
+			or ship.arc_type == Ship.TrajectoryType.FOLDING:
+		_clear_line_mesh(arc_mi)
+		_clear_line_mesh(trail_mi)
+		return
+
+	var dur := ship.arrival_day - ship.departure_day
+	var t   := clampf((_elapsed_days - ship.departure_day) / maxf(dur, 1.0), 0.0, 1.0)
+
+	var all_pts: PackedVector3Array
+	match ship.arc_type:
+		Ship.TrajectoryType.HOHMANN:
+			all_pts = _OM.hohmann_arc_points(
+					ship.origin_pos, ship.dest_pos, _ARC_STEPS)
+		Ship.TrajectoryType.SPIRAL:
+			all_pts = _OM.spiral_arc_points(
+					ship.origin_pos, ship.dest_pos, ship.n_turns, _ARC_STEPS)
+		Ship.TrajectoryType.TORCH:
+			all_pts = _OM.torch_arc_points(
+					ship.origin_pos, ship.dest_pos, _ARC_STEPS)
+		_:
+			_clear_line_mesh(arc_mi)
+			_clear_line_mesh(trail_mi)
+			return
+
+	var split := clampi(int(t * (_ARC_STEPS - 1)), 0, _ARC_STEPS - 2)
+	_set_line_mesh(trail_mi, all_pts.slice(0, split + 1),
+			entry["trail_mat"] as StandardMaterial3D)
+	_set_line_mesh(arc_mi,   all_pts.slice(split),
+			entry["arc_mat"]   as StandardMaterial3D)
 
 
 func _body_pos_au(body_name: String) -> Vector3:
@@ -329,13 +401,43 @@ func _body_pos_au(body_name: String) -> Vector3:
 	return Vector3.ZERO
 
 
+# ── Line mesh helpers ─────────────────────────────────────────────────────────
+
+func _line_mi(col: Color) -> MeshInstance3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = col
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var mi  := MeshInstance3D.new()
+	mi.mesh  = ArrayMesh.new()
+	mi.set_meta("mat", mat)
+	return mi
+
+
+func _clear_line_mesh(mi: MeshInstance3D) -> void:
+	(mi.mesh as ArrayMesh).clear_surfaces()
+
+
+func _set_line_mesh(mi: MeshInstance3D, pts: PackedVector3Array,
+		mat: StandardMaterial3D) -> void:
+	var mesh := mi.mesh as ArrayMesh
+	mesh.clear_surfaces()
+	if pts.size() < 2:
+		return
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = pts
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_LINE_STRIP, arrays)
+	mesh.surface_set_material(0, mat)
+
+
 # ── Label overlay ─────────────────────────────────────────────────────────────
 
 func _make_label(text: String) -> Label:
 	var lbl := Label.new()
 	lbl.text = text
-	lbl.add_theme_font_size_override("font_size", 11)
-	lbl.add_theme_color_override("font_color", Color(0.85, 0.90, 1.00, 0.90))
+	lbl.add_theme_font_size_override("font_size", SceneUtil.LABEL_SIZE_2D)
+	lbl.add_theme_color_override("font_color", Color.WHITE)
 	lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 	lbl.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_label_overlay.add_child(lbl)
@@ -350,13 +452,15 @@ func _update_label_positions() -> void:
 
 	for entry: Dictionary in _planet_nodes:
 		var lbl: Label = entry["label"]
-		var world_pos: Vector3 = (entry["mi"] as MeshInstance3D).global_position
-		_position_label(lbl, world_pos, vp_size, cont_size, Vector2(6, -6))
+		var r: float   = float(entry.get("radius", 0.01))
+		var world_pos  := (entry["mi"] as MeshInstance3D).global_position + Vector3(0, r * 1.8, 0)
+		_position_label(lbl, world_pos, vp_size, cont_size, Vector2(0, -4))
 
 	for entry: Dictionary in _star_nodes:
 		var lbl: Label = entry["label"]
-		var world_pos: Vector3 = (entry["mi"] as MeshInstance3D).global_position
-		_position_label(lbl, world_pos, vp_size, cont_size, Vector2(6, -6))
+		var r: float   = float(entry.get("radius", 0.06))
+		var world_pos  := (entry["mi"] as MeshInstance3D).global_position + Vector3(0, r * 1.8, 0)
+		_position_label(lbl, world_pos, vp_size, cont_size, Vector2(0, -4))
 
 	for entry: Dictionary in _ship_nodes:
 		var lbl: Label = entry["label"]
@@ -379,41 +483,83 @@ func _position_label(lbl: Label, world_pos: Vector3,
 # ── Input ─────────────────────────────────────────────────────────────────────
 
 func _process(delta: float) -> void:
-	if not _paused and _current_zone >= 3 and _current_zone <= 5:
-		_anim_days += delta * VISUAL_RATE
+	if _current_zone >= 3 and _current_zone <= 5:
 		_update_planet_positions()
 	_update_hover()
 	_update_label_positions()
-	if _cam and _orbit_ring_labels.size() > 0:
-		SceneUtil.update_labels(_orbit_ring_labels, _cam, float(_vp.size.y))
+	_update_camera_keys(delta)
+	if _cam:
+		if _orbit_rings.size() > 0:
+			SceneUtil.update_rings(_orbit_rings, _cam, float(_vp.size.y))
+		if _orbit_ring_labels.size() > 0:
+			SceneUtil.update_labels(_orbit_ring_labels, _cam, float(_vp.size.y))
+
+
+func _update_camera_keys(delta: float) -> void:
+	if not visible or not _cam:
+		return
+	var right  := _cam.global_transform.basis.x
+	var fwd_xz := Vector3(-_cam.global_transform.basis.z.x, 0.0,
+			-_cam.global_transform.basis.z.z).normalized()
+	var speed  := _cam_dist * delta
+	var moved  := false
+	if Input.is_action_pressed("ui_left"):
+		_pan -= right * speed;   moved = true
+	if Input.is_action_pressed("ui_right"):
+		_pan += right * speed;   moved = true
+	if Input.is_action_pressed("ui_up"):
+		_pan += fwd_xz * speed;  moved = true
+	if Input.is_action_pressed("ui_down"):
+		_pan -= fwd_xz * speed;  moved = true
+	if moved:
+		_update_camera()
 
 
 func _update_hover() -> void:
-	if not _cam or not _hover_ring:
+	if not visible or not _cam or not _hover_ring:
 		return
 	var mouse_pos := get_local_mouse_position()
+	if mouse_pos.x < 0.0 or mouse_pos.y < 0.0 or mouse_pos.x > size.x or mouse_pos.y > size.y:
+		if _hover_ring: _hover_ring.visible = false
+		if _hover_name != "":
+			_hover_name = ""
+			for entry: Dictionary in _planet_nodes:
+				(entry["label"] as Label).add_theme_color_override("font_color", SceneUtil.COL_LABEL_BODY)
+			for entry: Dictionary in _star_nodes:
+				(entry["label"] as Label).add_theme_color_override("font_color", SceneUtil.COL_LABEL_STAR)
+		return
 	var vp_size   := Vector2(_vp.size)
 	var mouse_vp  := mouse_pos * vp_size / size   # container → viewport pixels
 
+	var min_r   := _min_ring_world_r(22.0)
+	var vp_h    := float(_vp.size.y)
+	var fov_tan := tan(deg_to_rad(_cam.fov) * 0.5)
+	var to_scr  := vp_h * 0.5 / maxf(_cam_dist * fov_tan, 0.001)
+
 	var bodies: Array = []
+	for entry: Dictionary in _planet_nodes + _star_nodes:
+		var mi_pos := (entry["mi"] as MeshInstance3D).global_position
+		var r      := float(entry.get("radius", 0.013))
+		var name   := str(entry["name"])
+		var threshold := maxf(44.0, maxf(r * 2.5, min_r) * to_scr + 8.0)
+		bodies.append({"name": name, "world_pos": mi_pos,
+				"radius": r, "screen_threshold_px": threshold})
+		# Label sits slightly above body — include as detection target; ring stays on body.
+		bodies.append({"name": name,
+				"world_pos": mi_pos + Vector3(0.0, r * 1.8, 0.0),
+				"ring_world_pos": mi_pos,
+				"radius": r, "screen_threshold_px": threshold * 0.7})
+
+	var hit   := SceneUtil.update_hover(_cam, mouse_vp, bodies, _hover_ring, 2.5, min_r)
+	_hover_name = str(hit.get("name", ""))
 	for entry: Dictionary in _planet_nodes:
-		bodies.append({"world_pos": (entry["mi"] as MeshInstance3D).global_position,
-				"radius": entry.get("radius", 0.013), "screen_threshold_px": 28.0})
+		(entry["label"] as Label).add_theme_color_override("font_color",
+				Color(0.70, 1.00, 1.00, 1.00) if str(entry["name"]) == _hover_name \
+				else SceneUtil.COL_LABEL_BODY)
 	for entry: Dictionary in _star_nodes:
-		bodies.append({"world_pos": (entry["mi"] as MeshInstance3D).global_position,
-				"radius": entry.get("radius", 0.06), "screen_threshold_px": 28.0})
-
-	var hit   := SceneUtil.nearest_hit(_cam, mouse_vp, bodies)
-	var min_r := _min_ring_world_r(18.0)
-
-	if hit["radius"] > 0.0:
-		_hover_ring.position = hit["world_pos"]
-		_hover_ring.scale    = Vector3.ONE * maxf(float(hit["radius"]) * 2.5, min_r)
-		_hover_ring.visible  = true
-		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	else:
-		_hover_ring.visible = false
-		mouse_default_cursor_shape = Control.CURSOR_ARROW
+		(entry["label"] as Label).add_theme_color_override("font_color",
+				Color(0.70, 1.00, 1.00, 1.00) if str(entry["name"]) == _hover_name \
+				else SceneUtil.COL_LABEL_STAR)
 
 	# Selection ring — tracks current_body each frame
 	var cur := ScaleEngine.current_body
@@ -463,15 +609,14 @@ func _gui_input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		if _dragging:
 			_did_drag = true
-			var delta_px := (event as InputEventMouseMotion).relative
-			# Pan in world space: right = cam right, forward = -cam forward projected to XZ
+			var total_delta := (event as InputEventMouseMotion).position - _drag_origin
 			var right  := _cam.global_transform.basis.x
 			var fwd_xz := Vector3(-_cam.global_transform.basis.z.x, 0.0,
 					-_cam.global_transform.basis.z.z).normalized()
 			var speed := _cam_dist * 0.0018
 			_pan = _pan_origin \
-				+ right   * (-delta_px.x * speed) \
-				+ fwd_xz  * (-delta_px.y * speed)
+				+ right   * (-total_delta.x * speed) \
+				+ fwd_xz  * (-total_delta.y * speed)
 			_update_camera()
 	elif event is InputEventMagnifyGesture:
 		var factor := 1.0 / (event as InputEventMagnifyGesture).factor
@@ -495,14 +640,9 @@ func _on_label_input(event: InputEvent, body_name: String) -> void:
 			get_viewport().set_input_as_handled()
 
 
-func _try_click(screen_pos: Vector2) -> void:
-	for entry: Dictionary in _planet_nodes:
-		var mi: MeshInstance3D = entry["mi"]
-		var sp := _cam.unproject_position(mi.global_position)
-		var cp := sp * size / Vector2(_vp.size)
-		if screen_pos.distance_to(cp) < 20.0:
-			_handle_body_click(entry["name"])
-			return
+func _try_click(_screen_pos: Vector2) -> void:
+	if _hover_name != "":
+		_handle_body_click(_hover_name)
 
 
 func _handle_body_click(_body_name: String) -> void:

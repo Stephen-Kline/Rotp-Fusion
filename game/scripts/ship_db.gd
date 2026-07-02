@@ -38,10 +38,15 @@ func get_role(id: String) -> int:
 	var role_str: String = str(_entries.get(id, {}).get("role", "probe"))
 	match role_str:
 		"mission_specific":  return Ship.Role.MISSION_SPECIFIC
+		"transport":         return Ship.Role.TRANSPORT_CARGO
 		"transport_human":   return Ship.Role.TRANSPORT_HUMAN
 		"transport_cargo":   return Ship.Role.TRANSPORT_CARGO
 		"military":          return Ship.Role.MILITARY
 		_:                   return Ship.Role.PROBE
+
+
+func get_capacity(id: String) -> float:
+	return float(_entries.get(id, {}).get("capacity", 0.0))
 
 
 func get_description(id: String) -> String:

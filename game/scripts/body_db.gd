@@ -1,6 +1,8 @@
 class_name BodyDB
 extends RefCounted
 
+const _OrbitalMechanics = preload("res://scripts/orbital_mechanics.gd")
+
 var _solar: Dictionary = {}   # id -> body Dictionary
 var _solar_list: Array = []   # ordered for solar system view
 var _stars: Array = []        # nearby stars list
@@ -71,3 +73,38 @@ func orbital_period_years(id: String) -> float:
 
 func radius_km(id: String) -> float:
 	return float(_solar.get(id, {}).get("radius_km", 0.0))
+
+
+func ang0_deg(id: String) -> float:
+	return float(_solar.get(id, {}).get("ang0_deg", 0.0))
+
+
+func mass_ratio(id: String) -> float:
+	return float(_solar.get(id, {}).get("mass_ratio", 0.0))
+
+
+func resource_bonus(id: String) -> Dictionary:
+	return _solar.get(id, {}).get("resource_bonus", {}) as Dictionary
+
+
+# Position of a solar body in AU (planets) or km (moons) at the given elapsed_days.
+func body_pos_at(id: String, elapsed_days: float) -> Vector3:
+	var b: Dictionary = _solar.get(id, {})
+	if b.is_empty():
+		return Vector3.ZERO
+	var parent: String = str(b.get("parent", ""))
+	if parent != "" and parent != "Sol" and parent != "null":
+		# Moon — position relative to parent, in km
+		return _OrbitalMechanics.moon_pos_at(
+			float(b.get("orbital_km", 0.0)),
+			float(b.get("period_days", 27.0)),
+			float(b.get("ang0_deg", 0.0)),
+			elapsed_days
+		)
+	# Solar body — position in AU
+	return _OrbitalMechanics.solar_pos_at(
+		float(b.get("orbital_au", 0.0)),
+		float(b.get("orbital_period_years", 1.0)),
+		float(b.get("ang0_deg", 0.0)),
+		elapsed_days
+	)

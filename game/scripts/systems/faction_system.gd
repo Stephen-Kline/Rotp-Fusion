@@ -74,6 +74,32 @@ func _compute_factions(s: SimulationState, delta_years: float, result: TickResul
 		total += f.satisfaction
 	s.faction_satisfaction = total / float(s.factions.size()) if s.factions.size() > 0 else 50.0
 
+	_apply_passive_effects(s)
+
+
+func _apply_passive_effects(s: SimulationState) -> void:
+	# Satisfaction tiers: ≥70 → bonus, 30–69 → neutral, <30 → penalty.
+	# These fields are recomputed every tick and read by EconomySystem / ColonySystem.
+	s.faction_research_rate_bonus      = 0.0
+	s.faction_construction_speed_bonus = 0.0
+	s.faction_env_bonus                = 0.0
+
+	for f: Faction in s.factions:
+		var effect: float
+		if f.satisfaction >= 70.0:
+			effect = 1.0
+		elif f.satisfaction < 30.0:
+			effect = -1.0
+		else:
+			effect = 0.0
+		match f.ideological_type:
+			"technocrat":
+				s.faction_research_rate_bonus += effect * 0.8
+			"industrialist":
+				s.faction_construction_speed_bonus += effect * 0.4
+			"environmentalist":
+				s.faction_env_bonus += effect * 3.0
+
 
 func _check_gsa_preconditions(s: SimulationState, result: TickResult) -> void:
 	if s.milestone_flags.get("gsa_founded", false):

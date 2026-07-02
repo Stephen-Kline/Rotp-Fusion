@@ -9,6 +9,7 @@ enum Type {
 	SPEND_POLITICAL_CAPITAL,
 	LAUNCH_MOON_MISSION,  # deprecated no-op; kept so old callers don't break
 	BUILD_STRUCTURE,      # construct a ground/orbital structure at a body
+	DEMOLISH_STRUCTURE,   # permanently remove a structure at a body (no refund)
 	BUILD_SHIP,           # begin ship construction at a launch facility
 	LAUNCH_SHIP,          # authorize departure of a built or orbiting ship
 }
@@ -51,6 +52,11 @@ static func launch_moon_mission() -> PlayerAction:
 static func build_structure(structure_type: String, body: String = "earth") -> PlayerAction:
 	return PlayerAction.new(Type.BUILD_STRUCTURE,
 		{"structure_type": structure_type, "body": body})
+
+
+static func demolish_structure(index: int, body: String = "earth") -> PlayerAction:
+	return PlayerAction.new(Type.DEMOLISH_STRUCTURE,
+		{"index": index, "body": body})
 
 
 static func build_ship(build_option: String, origin: String = "earth") -> PlayerAction:

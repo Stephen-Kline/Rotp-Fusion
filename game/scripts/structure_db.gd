@@ -41,5 +41,26 @@ func get_description(id: String) -> String:
 	return str(_entries.get(id, {}).get("description", ""))
 
 
+# Returns the orbital altitude above the body surface in km (game-scaled for
+# visibility, not real-world), or null if the structure is surface-based.
+func get_orbit_km(id: String) -> Variant:
+	var e: Dictionary = _entries.get(id, {})
+	if not e.has("orbit_km"):
+		return null
+	return float(e["orbit_km"])
+
+
+func is_repeatable(id: String) -> bool:
+	return bool(_entries.get(id, {}).get("repeatable", false))
+
+
+func get_env_delta(id: String) -> float:
+	return float(_entries.get(id, {}).get("env_delta", 0.0))
+
+
+func get_energy_op(id: String) -> float:
+	return float(_entries.get(id, {}).get("energy_op", 0.0))
+
+
 func has(id: String) -> bool:
 	return _entries.has(id)

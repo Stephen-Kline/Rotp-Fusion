@@ -6,7 +6,9 @@
       "parent": null,
       "orbital_au": 0.0,
       "orbital_period_years": 0.0,
+      "ang0_deg": 0.0,
       "radius_km": 695700,
+      "mass_ratio": 1.0,
       "spectral_type": "G2V",
       "moons": []
     },
@@ -16,7 +18,9 @@
       "parent": "Sol",
       "orbital_au": 0.387,
       "orbital_period_years": 0.24085,
+      "ang0_deg": 37.25,
       "radius_km": 2439,
+      "mass_ratio": 1.660e-7,
       "moons": []
     },
     {
@@ -25,7 +29,9 @@
       "parent": "Sol",
       "orbital_au": 0.723,
       "orbital_period_years": 0.61520,
+      "ang0_deg": 101.98,
       "radius_km": 6051,
+      "mass_ratio": 2.448e-6,
       "moons": []
     },
     {
@@ -34,9 +40,11 @@
       "parent": "Sol",
       "orbital_au": 1.000,
       "orbital_period_years": 1.00000,
+      "ang0_deg": 110.46,
       "radius_km": 6371,
+      "mass_ratio": 3.003e-6,
       "moons": [
-        {"id": "Moon", "orbital_km": 384400, "period_days": 27.321}
+        {"id": "Moon", "orbital_km": 384400, "period_days": 27.321, "ang0_deg": 0.0}
       ]
     },
     {
@@ -45,10 +53,13 @@
       "parent": "Sol",
       "orbital_au": 1.524,
       "orbital_period_years": 1.88085,
+      "ang0_deg": 145.45,
       "radius_km": 3389,
+      "mass_ratio": 3.227e-7,
+      "resource_bonus": {"materials": 1.5},
       "moons": [
-        {"id": "Phobos", "orbital_km": 9376,  "period_days": 0.319},
-        {"id": "Deimos", "orbital_km": 23460, "period_days": 1.263}
+        {"id": "Phobos", "orbital_km": 9376,  "period_days": 0.319,  "ang0_deg": 0.0},
+        {"id": "Deimos", "orbital_km": 23460, "period_days": 1.263,  "ang0_deg": 0.0}
       ]
     },
     {
@@ -57,7 +68,9 @@
       "parent": "Sol",
       "orbital_au": 2.770,
       "orbital_period_years": 4.60700,
+      "ang0_deg": 295.00,
       "radius_km": 473,
+      "mass_ratio": 4.720e-10,
       "moons": []
     },
     {
@@ -66,12 +79,14 @@
       "parent": "Sol",
       "orbital_au": 5.203,
       "orbital_period_years": 11.86200,
+      "ang0_deg": 316.90,
       "radius_km": 71492,
+      "mass_ratio": 9.548e-4,
       "moons": [
-        {"id": "Io",       "orbital_km": 421800, "period_days":  1.769},
-        {"id": "Europa",   "orbital_km": 671100, "period_days":  3.551},
-        {"id": "Ganymede", "orbital_km": 1070400,"period_days":  7.155},
-        {"id": "Callisto", "orbital_km": 1882700,"period_days": 16.690}
+        {"id": "Io",       "orbital_km": 421800,  "period_days": 1.769,  "ang0_deg": 0.0},
+        {"id": "Europa",   "orbital_km": 671100,  "period_days": 3.551,  "ang0_deg": 0.0, "resource_bonus": {"consumables": 1.4}},
+        {"id": "Ganymede", "orbital_km": 1070400, "period_days": 7.155,  "ang0_deg": 0.0},
+        {"id": "Callisto", "orbital_km": 1882700, "period_days": 16.690, "ang0_deg": 0.0}
       ]
     },
     {
@@ -80,11 +95,13 @@
       "parent": "Sol",
       "orbital_au": 9.537,
       "orbital_period_years": 29.45700,
+      "ang0_deg": 158.94,
       "radius_km": 60268,
+      "mass_ratio": 2.858e-4,
       "moons": [
-        {"id": "Mimas",     "orbital_km": 185520, "period_days":  0.942},
-        {"id": "Enceladus", "orbital_km": 238020, "period_days":  1.370},
-        {"id": "Titan",     "orbital_km": 1221870,"period_days": 15.950}
+        {"id": "Mimas",     "orbital_km": 185520,  "period_days": 0.942,  "ang0_deg": 0.0},
+        {"id": "Enceladus", "orbital_km": 238020,  "period_days": 1.370,  "ang0_deg": 0.0},
+        {"id": "Titan",     "orbital_km": 1221870, "period_days": 15.950, "ang0_deg": 0.0, "resource_bonus": {"energy": 1.6}}
       ]
     },
     {
@@ -93,11 +110,13 @@
       "parent": "Sol",
       "orbital_au": 19.191,
       "orbital_period_years": 84.01100,
+      "ang0_deg": 99.23,
       "radius_km": 25559,
+      "mass_ratio": 4.365e-5,
       "moons": [
-        {"id": "Miranda", "orbital_km": 129900, "period_days":  1.413},
-        {"id": "Titania", "orbital_km": 436300, "period_days":  8.706},
-        {"id": "Oberon",  "orbital_km": 583500, "period_days": 13.463}
+        {"id": "Miranda", "orbital_km": 129900, "period_days": 1.413,  "ang0_deg": 0.0},
+        {"id": "Titania", "orbital_km": 436300, "period_days": 8.706,  "ang0_deg": 0.0},
+        {"id": "Oberon",  "orbital_km": 583500, "period_days": 13.463, "ang0_deg": 0.0}
       ]
     },
     {
@@ -106,9 +125,11 @@
       "parent": "Sol",
       "orbital_au": 30.069,
       "orbital_period_years": 164.80000,
+      "ang0_deg": 195.88,
       "radius_km": 24764,
+      "mass_ratio": 5.149e-5,
       "moons": [
-        {"id": "Triton", "orbital_km": 354800, "period_days": -5.877}
+        {"id": "Triton", "orbital_km": 354800, "period_days": -5.877, "ang0_deg": 0.0}
       ]
     },
     {
@@ -117,9 +138,11 @@
       "parent": "Sol",
       "orbital_au": 39.480,
       "orbital_period_years": 247.94000,
+      "ang0_deg": 166.00,
       "radius_km": 1188,
+      "mass_ratio": 6.580e-9,
       "moons": [
-        {"id": "Charon", "orbital_km": 19591, "period_days": 6.387}
+        {"id": "Charon", "orbital_km": 19591, "period_days": 6.387, "ang0_deg": 0.0}
       ]
     }
   ],

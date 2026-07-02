@@ -25,5 +25,15 @@
     "energy": 1e19,
     "build_days": 540.0,
     "description": "A crewed spacecraft capable of landing on the Moon and returning safely to Earth."
+  },
+  {
+    "id": "transport_freighter",
+    "display_name": "Interplanetary Freighter",
+    "role": "transport",
+    "materials": 5e9,
+    "energy": 5e19,
+    "build_days": 730.0,
+    "capacity": 1e12,
+    "description": "A bulk cargo vessel for moving resources between colonies. Capacity upgradeable via tech."
   }
 ]

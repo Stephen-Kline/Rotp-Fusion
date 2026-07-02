@@ -14,5 +14,83 @@
     "energy": 5e19,
     "struct_bonuses": {},
     "description": "An advanced launch complex with reusable systems and higher throughput. Supports heavy-lift missions."
+  },
+  {
+    "id": "modular_station",
+    "display_name": "Modular Space Station",
+    "orbit_km": 3000,
+    "materials": 2e10,
+    "energy": 5e19,
+    "struct_bonuses": {
+      "knowledge": 2e8
+    },
+    "description": "A permanent crewed station in low orbit. Microgravity research accelerates scientific discovery."
+  },
+  {
+    "id": "expanded_station",
+    "display_name": "Expanded Station",
+    "orbit_km": 4200,
+    "materials": 8e10,
+    "energy": 2e20,
+    "struct_bonuses": {
+      "knowledge": 5e8,
+      "materials": 1e9
+    },
+    "description": "A large multi-module station serving as a construction hub and deep-space research complex."
+  },
+  {
+    "id": "coal_plant",
+    "display_name": "Coal Power Plant",
+    "repeatable": true,
+    "materials": 5e8,
+    "energy": 1e18,
+    "env_delta": -8.0,
+    "energy_op": 1e19,
+    "struct_bonuses": { "energy": 8e19 },
+    "description": "Combustion plant burning fossil fuels for high-output electricity. Severe environmental cost."
+  },
+  {
+    "id": "industrial_complex",
+    "display_name": "Industrial Complex",
+    "repeatable": true,
+    "materials": 1e9,
+    "energy": 2e18,
+    "env_delta": -5.0,
+    "energy_op": 2e19,
+    "struct_bonuses": { "materials": 3e9 },
+    "description": "Heavy manufacturing and extraction hub. Boosts material output at significant ecological cost."
+  },
+  {
+    "id": "forest_reserve",
+    "display_name": "Forest Reserve",
+    "repeatable": true,
+    "materials": 2e8,
+    "energy": 5e17,
+    "env_delta": 5.0,
+    "energy_op": 5e18,
+    "struct_bonuses": {},
+    "description": "Protected natural forest maintained as a carbon sink and ecological buffer."
+  },
+  {
+    "id": "solar_farm",
+    "display_name": "Solar Farm",
+    "repeatable": true,
+    "materials": 4e8,
+    "energy": 8e17,
+    "env_delta": 2.0,
+    "energy_op": 2e18,
+    "struct_bonuses": { "energy": 3e19 },
+    "description": "Utility-scale photovoltaic arrays. Net-positive clean energy with modest environmental benefit."
+  },
+  {
+    "id": "wind_farm",
+    "display_name": "Wind Farm",
+    "repeatable": true,
+    "materials": 3e8,
+    "energy": 6e17,
+    "env_delta": 2.0,
+    "energy_op": 1e18,
+    "struct_bonuses": { "energy": 2e19 },
+    "description": "Grid of wind turbines providing low-overhead renewable energy."
   }
 ]

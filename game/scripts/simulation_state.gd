@@ -26,7 +26,16 @@ extends Resource
 @export var mult_knowledge:   float = 1.0
 @export var mult_materials:   float = 1.0
 
-# ── Legacy aggregated display fields (derived each tick from colony data) ──────
+# ── Civilisation-wide knowledge (global, not per-colony) ──────────────────────
+@export var knowledge_stockpile: float = 0.0
+@export var knowledge_rate:      float = 0.0
+
+# ── Faction passive effect bonuses (recomputed by FactionSystem each tick) ────
+@export var faction_research_rate_bonus:       float = 0.0
+@export var faction_construction_speed_bonus:  float = 0.0
+@export var faction_env_bonus:                 float = 0.0
+
+# ── Aggregated display fields (derived each tick from colony data) ─────────────
 @export var energy_capacity: float = 1.0
 @export var research_rate: float = 0.0
 @export var construction_speed: float = 1.0
@@ -61,80 +70,57 @@ var milestone_gsa_founded: bool:
 # Legacy bonus fields — kept until tech tree payloads are migrated to multipliers
 @export var research_rate_bonus: float = 0.0
 @export var construction_speed_bonus: float = 0.0
+# Global env recovery bonus granted by reforestation tech (stub for per-colony system)
+@export var env_rate_bonus: float = 0.0
 
 @export var founding_principles: Array[String] = []
 
 @export var ships: Array[Ship] = []
 @export var orbital_units: Array[OrbitalUnit] = []
 
-# ── Backward-compat delegates to colonies[0] (Earth) ─────────────────────────
-# These let existing Governor and UI code keep working during the migration.
-# New code should access state.colonies[i] directly.
+# ── Aggregate read-only getters (sum across all colonies) ─────────────────────
+# EconomySystem writes to col.* fields directly; these aggregate for UI display.
+# ShipSystem and ColonySystem MUST use col.* for deductions (no write path here).
 
 var energy_stockpile: float:
-	get: return colonies[0].energy_stockpile if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].energy_stockpile = v
+	get:
+		var t := 0.0
+		for c: ColonyState in colonies: t += c.energy_stockpile
+		return t
 
 var consumables_stockpile: float:
-	get: return colonies[0].consumables_stockpile if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].consumables_stockpile = v
-
-var knowledge_stockpile: float:
-	get: return colonies[0].knowledge_stockpile if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].knowledge_stockpile = v
+	get:
+		var t := 0.0
+		for c: ColonyState in colonies: t += c.consumables_stockpile
+		return t
 
 var materials_stockpile: float:
-	get: return colonies[0].materials_stockpile if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].materials_stockpile = v
+	get:
+		var t := 0.0
+		for c: ColonyState in colonies: t += c.materials_stockpile
+		return t
 
 var energy_rate: float:
-	get: return colonies[0].energy_rate if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].energy_rate = v
+	get:
+		var t := 0.0
+		for c: ColonyState in colonies: t += c.energy_rate
+		return t
 
 var consumables_rate: float:
-	get: return colonies[0].consumables_rate if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].consumables_rate = v
-
-var knowledge_rate: float:
-	get: return colonies[0].knowledge_rate if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].knowledge_rate = v
+	get:
+		var t := 0.0
+		for c: ColonyState in colonies: t += c.consumables_rate
+		return t
 
 var materials_rate: float:
-	get: return colonies[0].materials_rate if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].materials_rate = v
+	get:
+		var t := 0.0
+		for c: ColonyState in colonies: t += c.materials_rate
+		return t
 
-var struct_energy: float:
-	get: return colonies[0].struct_energy if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].struct_energy = v
-
-var struct_consumables: float:
-	get: return colonies[0].struct_consumables if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].struct_consumables = v
-
-var struct_knowledge: float:
-	get: return colonies[0].struct_knowledge if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].struct_knowledge = v
-
-var struct_materials: float:
-	get: return colonies[0].struct_materials if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].struct_materials = v
-
+# Earth-display read (planet_view_3d, toolbar population label)
 var population_units: float:
 	get: return colonies[0].population_units if not colonies.is_empty() else 0.0
-	set(v):
-		if not colonies.is_empty(): colonies[0].population_units = v
 
 # Read-only compat for fleet_panel and other UI reading state.structures.get("body", [])
 var structures: Dictionary:
@@ -178,12 +164,16 @@ var moon_mission_duration: float:
 func _init() -> void:
 	colonies = [_make_earth_colony()]
 	_init_factions()
+	# Basic infrastructure available without research
+	available_build_options = ["coal_plant", "industrial_complex", "forest_reserve"]
 
 
 func _make_earth_colony() -> ColonyState:
 	var c := ColonyState.new()
 	c.body_id = "Earth"
 	c.population_units = 30.0
+	c.environment = 85.0
+	c.resource_bonus = BodyDB.new().resource_bonus("Earth")
 	return c
 
 

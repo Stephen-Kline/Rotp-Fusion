@@ -251,25 +251,12 @@ func _create_ship_row(ship: Ship, state: SimulationState) -> Dictionary:
 			dest_row.add_child(launch_btn)
 
 			var dest_str: String = _ship_destinations.get(ship.id, "moon")
-			var direct_ok := PropulsionData.is_direct_unlocked(state.completed_research)
 			var prof := FlightPlanner.plan(
-				ship.origin_body, dest_str, state.elapsed_days, ship.propulsion_tier, direct_ok)
+				ship.origin_body, dest_str, state.elapsed_days, ship.propulsion_tier, BodyDB.new())
 
 			vbox.add_child(UIUtil.make_label(
 				"Window: %.0fd  Transit: %.1fd" % [prof.window_wait_days, prof.transit_days],
 				9, UIUtil.COL_DIM))
-
-			if direct_ok:
-				var direct_btn := Button.new()
-				direct_btn.text = "Launch Direct (%.1fd, +cost)" % prof.direct_transit_days
-				direct_btn.add_theme_font_size_override("font_size", 9)
-				direct_btn.add_theme_color_override("font_color", UIUtil.COL_CYAN)
-				var cap2 := ship.id
-				direct_btn.pressed.connect(func():
-					var dest: String = _ship_destinations.get(cap2, "moon")
-					launch_ship_requested.emit(cap2, dest, true)
-				)
-				vbox.add_child(direct_btn)
 
 		Ship.ShipState.IN_TRANSIT:
 			var dest_name: String = DEST_LABELS.get(ship.destination_body,

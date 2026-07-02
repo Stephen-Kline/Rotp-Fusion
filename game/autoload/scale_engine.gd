@@ -4,6 +4,7 @@ extends Node
 
 signal zone_changed(new_zone: int)
 signal body_changed(body_name: String)
+signal local_focus_changed(body_name: String)
 
 # 1-indexed. unit is the display label; rings are zone-appropriate distance markers.
 const ZONES := [
@@ -22,6 +23,7 @@ const ZONES := [
 
 var current_zone: int = 1
 var current_body: String = "Earth"   # which body zone-1 local view shows
+var local_focus:  String = ""        # focused sub-body within current local view (no rebuild)
 var _max_unlocked: int = 10  # All zones unlocked for development
 
 
@@ -33,13 +35,20 @@ func transition_to(zone: int) -> void:
 	zone = clampi(zone, 1, 10)
 	if zone == current_zone or zone > _max_unlocked:
 		return
+	local_focus  = ""
 	current_zone = zone
 	zone_changed.emit(zone)
 
 
 func select_body(name: String) -> void:
+	local_focus  = ""
 	current_body = name
 	body_changed.emit(name)
+
+
+func focus_local(name: String) -> void:
+	local_focus = name
+	local_focus_changed.emit(name)
 
 
 func unlock_up_to(zone: int) -> void:

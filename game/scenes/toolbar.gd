@@ -5,6 +5,7 @@ signal tech_tree_toggled
 signal event_log_toggled
 signal budget_toggled
 signal fleet_toggled
+signal colonies_toggled
 
 const _NAVY   := Color(0.06, 0.10, 0.22)
 const _ORANGE := Color(0.92, 0.48, 0.12)
@@ -181,6 +182,13 @@ func _ready() -> void:
 	fleet_btn.add_theme_color_override("font_color", _CREAM)
 	fleet_btn.pressed.connect(func(): fleet_toggled.emit())
 	right.add_child(fleet_btn)
+
+	var colonies_btn := Button.new()
+	colonies_btn.text = "Colonies"
+	colonies_btn.flat = true
+	colonies_btn.add_theme_color_override("font_color", _CREAM)
+	colonies_btn.pressed.connect(func(): colonies_toggled.emit())
+	right.add_child(colonies_btn)
 
 	var rpad := Control.new(); rpad.custom_minimum_size = Vector2(10, 0)
 	root.add_child(rpad)

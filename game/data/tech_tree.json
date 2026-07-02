@@ -87,7 +87,7 @@
     "category": "Energy",
     "prerequisites": [],
     "research_cost": 8.0,
-    "unlock_payload": { "milestones": [], "build_options": [], "stat_modifiers": {"energy_bonus": 0.1} },
+    "unlock_payload": { "milestones": [], "build_options": ["solar_farm"], "stat_modifiers": {"energy_bonus": 0.1} },
     "kardashev_tier": 1,
     "description": "Photovoltaic arrays at utility scale, supplementing conventional energy production."
   },
@@ -231,5 +231,25 @@
     "unlock_payload": { "milestones": ["fusion_drive"], "build_options": [] },
     "kardashev_tier": 1,
     "description": "Controlled fusion providing 1 000 km/s thrust. When paired with Advanced Navigation, enables direct point-to-point trajectories — no launch windows required."
+  },
+  {
+    "id": "wind_power",
+    "display_name": "Wind Power",
+    "category": "Energy",
+    "prerequisites": [],
+    "research_cost": 6.0,
+    "unlock_payload": { "milestones": [], "build_options": ["wind_farm"], "stat_modifiers": {} },
+    "kardashev_tier": 1,
+    "description": "Large-scale wind turbine arrays. Low overhead, no emissions, limited by site geography."
+  },
+  {
+    "id": "reforestation_program",
+    "display_name": "Reforestation Program",
+    "category": "Environment",
+    "prerequisites": [],
+    "research_cost": 10.0,
+    "unlock_payload": { "milestones": ["reforestation_program"], "build_options": [], "stat_modifiers": {"env_rate_bonus": 10.0} },
+    "kardashev_tier": 1,
+    "description": "Coordinated planetary reforestation effort. Grants a permanent passive boost to environmental recovery. (Stub — will migrate to per-colony research.)"
   }
 ]

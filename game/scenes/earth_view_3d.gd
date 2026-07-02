@@ -30,7 +30,8 @@ var _launches: Array = []
 var _launch_timer := 0.0
 var _vp:         SubViewport      = null
 var _hover_ring: MeshInstance3D   = null
-var _label_list: Array[Label3D]   = []
+var _label_list:    Array[Label3D] = []
+var _ring_mesh_list: Array         = []
 
 var _population       := 30.0
 var _completed:       Array = []
@@ -276,15 +277,28 @@ func _build_distance_rings(vp: Node) -> void:
 	]
 
 	for r_data: Array in rings:
-		_ring(ring_root, float(r_data[0]), Color(1.0, 1.0, 1.0, 0.5), str(r_data[1]))
+		_ring(ring_root, float(r_data[0]), Color(1.0, 1.0, 1.0, 0.25), str(r_data[1]))
+
+	# Body name labels — ring_r = 999999 keeps past_fade always at 1.0
+	var earth_lbl := SceneUtil.make_orbit_label("Earth", Color.WHITE, 999999.0)
+	earth_lbl.position = Vector3(0.0, EARTH_R * 1.5, 0.0)
+	ring_root.add_child(earth_lbl)
+	_label_list.append(earth_lbl)
+
+	var moon_lbl := SceneUtil.make_orbit_label("Moon", Color.WHITE, 999999.0)
+	moon_lbl.position = Vector3(0.0, 0.36 * 2.0, 0.0)
+	_moon_mesh.add_child(moon_lbl)
+	_label_list.append(moon_lbl)
 
 
 func _ring(parent: Node3D, radius: float, col: Color, label: String) -> void:
-	parent.add_child(SceneUtil.make_orbit_ring(radius, col))
+	var ring := SceneUtil.make_orbit_ring(radius, col)
+	parent.add_child(ring)
+	_ring_mesh_list.append(ring)
 	if label != "":
 		var gap := TAU / 6.0
-		var lbl := SceneUtil.make_orbit_label(label, Color(1.0, 1.0, 1.0, 0.80), radius)
-		lbl.position = Vector3(cos(gap) * radius, 0.06, sin(gap) * radius)
+		var lbl := SceneUtil.make_orbit_label(label, Color.WHITE, radius)
+		lbl.position = Vector3(cos(gap) * radius, radius * 0.12, sin(gap) * radius)
 		parent.add_child(lbl)
 		_label_list.append(lbl)
 
@@ -483,7 +497,7 @@ func _satellite_count() -> int:
 
 func _process(delta: float) -> void:
 	_time += delta
-
+	_update_camera_keys(delta)
 	if _earth_root: _earth_root.rotation_degrees.y += delta * 3.0
 	if _cloud_root: _cloud_root.rotation_degrees.y += delta * 4.0
 	for i in _sat_orbits.size():
@@ -494,8 +508,11 @@ func _process(delta: float) -> void:
 	if _moon_orbit: _moon_orbit.rotation_degrees.y = _moon_angle_deg
 
 	_update_hover_ring()
-	if _cam and _label_list.size() > 0:
-		SceneUtil.update_labels(_label_list, _cam, float(_vp.size.y))
+	if _cam:
+		if _ring_mesh_list.size() > 0:
+			SceneUtil.update_rings(_ring_mesh_list, _cam, float(_vp.size.y))
+		if _label_list.size() > 0:
+			SceneUtil.update_labels(_label_list, _cam, float(_vp.size.y))
 
 	if _transit_craft and _transit_craft.visible and _moon_mesh:
 		var t := fmod(_time * 0.05, 1.0)
@@ -633,6 +650,15 @@ func _on_zone_changed(zone: int) -> void:
 
 
 # ── Pan / zoom ────────────────────────────────────────────────────────────────
+
+func _update_camera_keys(delta: float) -> void:
+	if not visible: return
+	var spd := delta / _PAN_SPEED
+	if Input.is_action_pressed("ui_left"):  _pan(Vector2( spd, 0.0))
+	if Input.is_action_pressed("ui_right"): _pan(Vector2(-spd, 0.0))
+	if Input.is_action_pressed("ui_up"):    _pan(Vector2(0.0, -spd))
+	if Input.is_action_pressed("ui_down"):  _pan(Vector2(0.0,  spd))
+
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMagnifyGesture:

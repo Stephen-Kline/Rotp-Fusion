@@ -94,6 +94,8 @@ func _apply_unlock_payload(s: SimulationState, node: TechNode) -> void:
 		s.research_rate_bonus += float(modifiers["research_rate_bonus"])
 	if modifiers.has("construction_speed_bonus"):
 		s.construction_speed_bonus += float(modifiers["construction_speed_bonus"])
+	if modifiers.has("env_rate_bonus"):
+		s.env_rate_bonus += float(modifiers["env_rate_bonus"])
 	if modifiers.has("mult_energy"):
 		s.mult_energy *= float(modifiers["mult_energy"])
 	if modifiers.has("mult_consumables"):
