@@ -21,6 +21,7 @@ var _milestone1_shown: bool = false
 var _fleet_panel:     FleetPanel = null
 var _colony_panel:    PanelContainer = null
 var _colonies_panel:  PanelContainer = null
+var _event_panel:     EventPanel = null
 var _solar_3d:        SubViewportContainer = null
 var _planet_view:     SubViewportContainer = null
 var _m_prev: bool = false
@@ -145,6 +146,25 @@ func _ready() -> void:
 			_colonies_panel.show()
 	)
 
+	# Active-event panel — bottom-left; auto-shows when events need player response
+	_event_panel = EventPanel.new()
+	$UI/EarthView.add_child(_event_panel)
+	_event_panel.anchor_left   = 0.0
+	_event_panel.anchor_right  = 0.0
+	_event_panel.anchor_top    = 1.0
+	_event_panel.anchor_bottom = 1.0
+	_event_panel.offset_left   = 0.0
+	_event_panel.offset_right  = 340.0
+	_event_panel.offset_top    = -320.0
+	_event_panel.offset_bottom = 0.0
+	_event_panel.events_appeared.connect(func():
+		game_loop.pause()
+		toolbar.apply_speed(Constants.SPEED_PAUSE)
+		_set_views_paused(true)
+	)
+	_event_panel.events_cleared.connect(_on_notification_dismissed)
+	_event_panel.event_choice_made.connect(_on_event_choice)
+
 	# Wire planet view selection signals
 	if _planet_view:
 		(_planet_view as Object).connect("body_selected", _on_planet_body_selected)
@@ -212,6 +232,7 @@ func _on_tick(state: SimulationState) -> void:
 		_colony_panel.call("refresh", col, state)
 	if _colonies_panel and _colonies_panel.visible:
 		_colonies_panel.call("refresh", state)
+	_event_panel.refresh(state)
 	if not _milestone1_shown and state.milestone_flags.get("moon_landing", false):
 		_milestone1_shown = true
 		victory_overlay.show_victory(int(state.elapsed_days))
@@ -346,6 +367,10 @@ func _on_colony_selected(body_id: String) -> void:
 	var s: SimulationState = game_loop.state as SimulationState
 	var col: ColonyState   = s.colony_for(body_id)
 	_colony_panel.call("show_for", body_id, col, s)
+
+
+func _on_event_choice(event_id: String, choice_id: String) -> void:
+	game_loop.queue_action(PlayerAction.resolve_event(event_id, choice_id))
 
 
 func _on_demolish_structure(structure_type: String, body: String) -> void:
