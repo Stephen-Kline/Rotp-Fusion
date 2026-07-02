@@ -5,7 +5,14 @@
     "category": "Propulsion",
     "prerequisites": [],
     "research_cost": 3.0,
-    "unlock_payload": { "milestones": ["suborbital_flight"], "build_options": ["launch_facility"] },
+    "unlock_payload": {
+      "milestones": [
+        "suborbital_flight"
+      ],
+      "build_options": [
+        "launch_facility"
+      ]
+    },
     "kardashev_tier": 1,
     "description": "First steps beyond the atmosphere. Rockets capable of reaching space but not achieving orbit."
   },
@@ -13,9 +20,18 @@
     "id": "orbital_satellite",
     "display_name": "Orbital Satellite",
     "category": "Propulsion",
-    "prerequisites": ["suborbital_flight"],
+    "prerequisites": [
+      "suborbital_flight"
+    ],
     "research_cost": 5.0,
-    "unlock_payload": { "milestones": ["orbital_satellite"], "build_options": ["satellite"] },
+    "unlock_payload": {
+      "milestones": [
+        "orbital_satellite"
+      ],
+      "build_options": [
+        "satellite"
+      ]
+    },
     "kardashev_tier": 1,
     "description": "Sustained Earth orbit achieved. Opens the door to communications and reconnaissance satellites."
   },
@@ -23,9 +39,16 @@
     "id": "crewed_orbit",
     "display_name": "Crewed Orbit",
     "category": "Propulsion",
-    "prerequisites": ["orbital_satellite"],
+    "prerequisites": [
+      "orbital_satellite"
+    ],
     "research_cost": 8.0,
-    "unlock_payload": { "milestones": ["crewed_orbit"], "build_options": [] },
+    "unlock_payload": {
+      "milestones": [
+        "crewed_orbit"
+      ],
+      "build_options": []
+    },
     "kardashev_tier": 1,
     "description": "Humans in orbit for the first time. A defining moment for the civilization."
   },
@@ -33,9 +56,17 @@
     "id": "long_duration_crewed",
     "display_name": "Long-Duration Crewed Mission",
     "category": "Propulsion",
-    "prerequisites": ["crewed_orbit", "space_medicine"],
+    "prerequisites": [
+      "crewed_orbit",
+      "space_medicine"
+    ],
     "research_cost": 10.0,
-    "unlock_payload": { "milestones": ["long_duration_crewed"], "build_options": [] },
+    "unlock_payload": {
+      "milestones": [
+        "long_duration_crewed"
+      ],
+      "build_options": []
+    },
     "kardashev_tier": 1,
     "description": "Weeks in orbit. Requires understanding of how the human body responds to sustained spaceflight."
   },
@@ -43,10 +74,22 @@
     "id": "lunar_transit",
     "display_name": "Lunar Transit Drive",
     "category": "Propulsion",
-    "prerequisites": ["long_duration_crewed", "modular_station"],
-    "required_milestones": ["gsa_founded"],
+    "prerequisites": [
+      "long_duration_crewed",
+      "modular_station"
+    ],
+    "required_milestones": [
+      "gsa_founded"
+    ],
     "research_cost": 25.0,
-    "unlock_payload": { "milestones": ["lunar_transit"], "build_options": ["lunar_transit_vehicle"] },
+    "unlock_payload": {
+      "milestones": [
+        "lunar_transit"
+      ],
+      "build_options": [
+        "lunar_transit_vehicle"
+      ]
+    },
     "kardashev_tier": 1,
     "description": "Propulsion and navigation systems capable of reaching the Moon. Requires Global Space Agency coordination."
   },
@@ -54,10 +97,22 @@
     "id": "crewed_lunar_vehicle",
     "display_name": "Crewed Lunar Lander",
     "category": "Propulsion",
-    "prerequisites": ["lunar_transit", "radiation_shielding"],
-    "required_milestones": ["lunar_probe_complete"],
+    "prerequisites": [
+      "lunar_transit",
+      "radiation_shielding"
+    ],
+    "required_milestones": [
+      "lunar_probe_complete"
+    ],
     "research_cost": 30.0,
-    "unlock_payload": { "milestones": ["crewed_lunar_vehicle"], "build_options": ["crewed_lunar_lander"] },
+    "unlock_payload": {
+      "milestones": [
+        "crewed_lunar_vehicle"
+      ],
+      "build_options": [
+        "crewed_lunar_lander"
+      ]
+    },
     "kardashev_tier": 1,
     "description": "A vessel capable of landing humans on the Moon and returning them safely. Crew requires proven radiation shielding."
   },
@@ -65,9 +120,18 @@
     "id": "modular_station",
     "display_name": "Modular Space Station",
     "category": "Engineering",
-    "prerequisites": ["long_duration_crewed"],
+    "prerequisites": [
+      "long_duration_crewed"
+    ],
     "research_cost": 15.0,
-    "unlock_payload": { "milestones": ["modular_station"], "build_options": ["modular_station"] },
+    "unlock_payload": {
+      "milestones": [
+        "modular_station"
+      ],
+      "build_options": [
+        "modular_station"
+      ]
+    },
     "kardashev_tier": 1,
     "description": "A permanent crewed outpost in LEO. The foundation for all further expansion."
   },
@@ -75,9 +139,19 @@
     "id": "expanded_station",
     "display_name": "Expanded Station",
     "category": "Engineering",
-    "prerequisites": ["modular_station", "closed_loop_life_support"],
+    "prerequisites": [
+      "modular_station",
+      "closed_loop_life_support"
+    ],
     "research_cost": 20.0,
-    "unlock_payload": { "milestones": ["expanded_station"], "build_options": ["expanded_station"] },
+    "unlock_payload": {
+      "milestones": [
+        "expanded_station"
+      ],
+      "build_options": [
+        "expanded_station"
+      ]
+    },
     "kardashev_tier": 1,
     "description": "A large multi-module station. Requires closed-loop life support to sustain a permanent crew at scale."
   },
@@ -87,7 +161,15 @@
     "category": "Energy",
     "prerequisites": [],
     "research_cost": 8.0,
-    "unlock_payload": { "milestones": [], "build_options": ["solar_farm"], "stat_modifiers": {"energy_bonus": 0.1} },
+    "unlock_payload": {
+      "milestones": [],
+      "build_options": [
+        "solar_farm"
+      ],
+      "stat_modifiers": {
+        "energy_bonus": 0.1
+      }
+    },
     "kardashev_tier": 1,
     "description": "Photovoltaic arrays at utility scale, supplementing conventional energy production."
   },
@@ -97,7 +179,13 @@
     "category": "Energy",
     "prerequisites": [],
     "research_cost": 12.0,
-    "unlock_payload": { "milestones": [], "build_options": [], "stat_modifiers": {"energy_bonus": 0.2} },
+    "unlock_payload": {
+      "milestones": [],
+      "build_options": [],
+      "stat_modifiers": {
+        "energy_bonus": 0.2
+      }
+    },
     "kardashev_tier": 1,
     "description": "Next-generation nuclear fission reactors providing reliable high-output energy."
   },
@@ -107,7 +195,12 @@
     "category": "Chemistry",
     "prerequisites": [],
     "research_cost": 6.0,
-    "unlock_payload": { "milestones": ["chemical_propellants"], "build_options": [] },
+    "unlock_payload": {
+      "milestones": [
+        "chemical_propellants"
+      ],
+      "build_options": []
+    },
     "kardashev_tier": 1,
     "description": "High-energy liquid and solid propellant chemistry. The foundation of rocket science."
   },
@@ -115,9 +208,19 @@
     "id": "advanced_materials",
     "display_name": "Advanced Materials",
     "category": "Chemistry",
-    "prerequisites": ["chemical_propellants"],
+    "prerequisites": [
+      "chemical_propellants"
+    ],
     "research_cost": 11.0,
-    "unlock_payload": { "milestones": ["advanced_materials"], "build_options": [], "stat_modifiers": {"construction_speed_bonus": 0.15} },
+    "unlock_payload": {
+      "milestones": [
+        "advanced_materials"
+      ],
+      "build_options": [],
+      "stat_modifiers": {
+        "construction_speed_bonus": 0.15
+      }
+    },
     "kardashev_tier": 1,
     "description": "Lightweight alloys, heat-resistant composites, and structural polymers enabling more capable spacecraft."
   },
@@ -125,9 +228,17 @@
     "id": "closed_loop_life_support",
     "display_name": "Closed-Loop Life Support",
     "category": "Chemistry",
-    "prerequisites": ["advanced_materials", "long_duration_crewed"],
+    "prerequisites": [
+      "advanced_materials",
+      "long_duration_crewed"
+    ],
     "research_cost": 16.0,
-    "unlock_payload": { "milestones": ["closed_loop_life_support"], "build_options": [] },
+    "unlock_payload": {
+      "milestones": [
+        "closed_loop_life_support"
+      ],
+      "build_options": []
+    },
     "kardashev_tier": 1,
     "description": "Fully recycled air and water systems. Required to sustain permanent crews in large orbital habitats."
   },
@@ -135,9 +246,19 @@
     "id": "space_medicine",
     "display_name": "Space Medicine",
     "category": "Medicine",
-    "prerequisites": ["crewed_orbit"],
+    "prerequisites": [
+      "crewed_orbit"
+    ],
     "research_cost": 8.0,
-    "unlock_payload": { "milestones": ["space_medicine"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.05} },
+    "unlock_payload": {
+      "milestones": [
+        "space_medicine"
+      ],
+      "build_options": [],
+      "stat_modifiers": {
+        "research_rate_bonus": 0.05
+      }
+    },
     "kardashev_tier": 1,
     "description": "Understanding how microgravity affects the human body. Essential for missions longer than a few days."
   },
@@ -145,9 +266,17 @@
     "id": "radiation_shielding",
     "display_name": "Radiation Shielding",
     "category": "Medicine",
-    "prerequisites": ["space_medicine", "advanced_materials"],
+    "prerequisites": [
+      "space_medicine",
+      "advanced_materials"
+    ],
     "research_cost": 14.0,
-    "unlock_payload": { "milestones": ["radiation_shielding"], "build_options": [] },
+    "unlock_payload": {
+      "milestones": [
+        "radiation_shielding"
+      ],
+      "build_options": []
+    },
     "kardashev_tier": 1,
     "description": "Passive and active shielding systems protecting crews from cosmic rays and solar particle events."
   },
@@ -155,9 +284,19 @@
     "id": "space_telescope",
     "display_name": "Space Telescope",
     "category": "Science",
-    "prerequisites": ["orbital_satellite"],
+    "prerequisites": [
+      "orbital_satellite"
+    ],
     "research_cost": 10.0,
-    "unlock_payload": { "milestones": ["space_telescope"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.1} },
+    "unlock_payload": {
+      "milestones": [
+        "space_telescope"
+      ],
+      "build_options": [],
+      "stat_modifiers": {
+        "research_rate_bonus": 0.1
+      }
+    },
     "kardashev_tier": 1,
     "description": "A large orbital telescope enabling deep-space observation and scientific discovery."
   },
@@ -165,9 +304,16 @@
     "id": "lunar_probe",
     "display_name": "Lunar Probe",
     "category": "Science",
-    "prerequisites": ["lunar_transit"],
+    "prerequisites": [
+      "lunar_transit"
+    ],
     "research_cost": 20.0,
-    "unlock_payload": { "milestones": ["lunar_probe_complete"], "build_options": [] },
+    "unlock_payload": {
+      "milestones": [
+        "lunar_probe_complete"
+      ],
+      "build_options": []
+    },
     "kardashev_tier": 1,
     "description": "An unmanned survey vessel sent to the Moon. Returns habitability and resource data, including water ice confirmation."
   },
@@ -175,9 +321,19 @@
     "id": "satellite_comms",
     "display_name": "Satellite Communications",
     "category": "Computing",
-    "prerequisites": ["orbital_satellite"],
+    "prerequisites": [
+      "orbital_satellite"
+    ],
     "research_cost": 7.0,
-    "unlock_payload": { "milestones": ["satellite_comms"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.05} },
+    "unlock_payload": {
+      "milestones": [
+        "satellite_comms"
+      ],
+      "build_options": [],
+      "stat_modifiers": {
+        "research_rate_bonus": 0.05
+      }
+    },
     "kardashev_tier": 1,
     "description": "Global communications backbone via orbital relay satellites. Enables real-time data sharing across the planet."
   },
@@ -185,9 +341,17 @@
     "id": "seti_array",
     "display_name": "SETI Array",
     "category": "Computing",
-    "prerequisites": ["satellite_comms", "space_telescope"],
+    "prerequisites": [
+      "satellite_comms",
+      "space_telescope"
+    ],
     "research_cost": 18.0,
-    "unlock_payload": { "milestones": ["seti_array"], "build_options": [] },
+    "unlock_payload": {
+      "milestones": [
+        "seti_array"
+      ],
+      "build_options": []
+    },
     "kardashev_tier": 1,
     "description": "A coordinated array of radio telescopes scanning for signs of extraterrestrial intelligence."
   },
@@ -195,9 +359,20 @@
     "id": "advanced_navigation",
     "display_name": "Advanced Navigation Systems",
     "category": "Computing",
-    "prerequisites": ["satellite_comms", "lunar_transit"],
+    "prerequisites": [
+      "satellite_comms",
+      "lunar_transit"
+    ],
     "research_cost": 22.0,
-    "unlock_payload": { "milestones": ["advanced_navigation"], "build_options": [], "stat_modifiers": {"research_rate_bonus": 0.05} },
+    "unlock_payload": {
+      "milestones": [
+        "advanced_navigation"
+      ],
+      "build_options": [],
+      "stat_modifiers": {
+        "research_rate_bonus": 0.05
+      }
+    },
     "kardashev_tier": 1,
     "description": "Deep-space navigation using pulsars, stellar interferometry, and onboard AI. Required for direct-trajectory burns when paired with fusion drives."
   },
@@ -205,10 +380,22 @@
     "id": "nuclear_thermal_drive",
     "display_name": "Nuclear Thermal Drive",
     "category": "Propulsion",
-    "prerequisites": ["crewed_lunar_vehicle", "advanced_fission"],
-    "required_milestones": ["moon_landing"],
+    "prerequisites": [
+      "crewed_lunar_vehicle",
+      "advanced_fission"
+    ],
+    "required_milestones": [
+      "moon_landing"
+    ],
     "research_cost": 45.0,
-    "unlock_payload": { "milestones": ["nuclear_thermal_drive"], "build_options": ["space_launch_facility"] },
+    "unlock_payload": {
+      "milestones": [
+        "nuclear_thermal_drive"
+      ],
+      "build_options": [
+        "space_launch_facility"
+      ]
+    },
     "kardashev_tier": 1,
     "description": "Reactor-heated propellant achieving 25 km/s exhaust velocity. Halves transit times and unlocks the Space Launch Facility upgrade."
   },
@@ -216,9 +403,17 @@
     "id": "ion_drive",
     "display_name": "Ion Propulsion",
     "category": "Propulsion",
-    "prerequisites": ["nuclear_thermal_drive", "advanced_materials"],
+    "prerequisites": [
+      "nuclear_thermal_drive",
+      "advanced_materials"
+    ],
     "research_cost": 60.0,
-    "unlock_payload": { "milestones": ["ion_drive"], "build_options": [] },
+    "unlock_payload": {
+      "milestones": [
+        "ion_drive"
+      ],
+      "build_options": []
+    },
     "kardashev_tier": 1,
     "description": "Electrically accelerated ions providing 100 km/s effective speed over long burns. Transforms interplanetary travel into routine operations."
   },
@@ -226,11 +421,19 @@
     "id": "fusion_drive",
     "display_name": "Fusion Drive",
     "category": "Propulsion",
-    "prerequisites": ["ion_drive", "advanced_fission"],
+    "prerequisites": [
+      "ion_drive",
+      "advanced_fission"
+    ],
     "research_cost": 120.0,
-    "unlock_payload": { "milestones": ["fusion_drive"], "build_options": [] },
+    "unlock_payload": {
+      "milestones": [
+        "fusion_drive"
+      ],
+      "build_options": []
+    },
     "kardashev_tier": 1,
-    "description": "Controlled fusion providing 1 000 km/s thrust. When paired with Advanced Navigation, enables direct point-to-point trajectories — no launch windows required."
+    "description": "Controlled fusion providing 1 000 km/s thrust. When paired with Advanced Navigation, enables direct point-to-point trajectories \u2014 no launch windows required."
   },
   {
     "id": "wind_power",
@@ -238,7 +441,13 @@
     "category": "Energy",
     "prerequisites": [],
     "research_cost": 6.0,
-    "unlock_payload": { "milestones": [], "build_options": ["wind_farm"], "stat_modifiers": {} },
+    "unlock_payload": {
+      "milestones": [],
+      "build_options": [
+        "wind_farm"
+      ],
+      "stat_modifiers": {}
+    },
     "kardashev_tier": 1,
     "description": "Large-scale wind turbine arrays. Low overhead, no emissions, limited by site geography."
   },
@@ -248,8 +457,160 @@
     "category": "Environment",
     "prerequisites": [],
     "research_cost": 10.0,
-    "unlock_payload": { "milestones": ["reforestation_program"], "build_options": [], "stat_modifiers": {"env_rate_bonus": 10.0} },
+    "unlock_payload": {
+      "milestones": [
+        "reforestation_program"
+      ],
+      "build_options": [],
+      "stat_modifiers": {
+        "env_rate_bonus": 10.0
+      }
+    },
     "kardashev_tier": 1,
-    "description": "Coordinated planetary reforestation effort. Grants a permanent passive boost to environmental recovery. (Stub — will migrate to per-colony research.)"
+    "description": "Coordinated planetary reforestation effort. Grants a permanent passive boost to environmental recovery. (Stub \u2014 will migrate to per-colony research.)"
+  },
+  {
+    "id": "colony_life_support",
+    "display_name": "Colony Life Support",
+    "category": "Engineering",
+    "prerequisites": [
+      "expanded_station",
+      "closed_loop_life_support"
+    ],
+    "required_milestones": [
+      "expanded_station"
+    ],
+    "research_cost": 35.0,
+    "unlock_payload": {
+      "milestones": [
+        "colony_life_support"
+      ],
+      "build_options": [
+        "colonizer",
+        "colony_habitat"
+      ]
+    },
+    "kardashev_tier": 1,
+    "description": "Life support systems robust enough to sustain a permanent off-world colony. Prerequisite for founding any planetary settlement."
+  },
+  {
+    "id": "colony_habitat_expansion",
+    "display_name": "Colony Habitat Expansion",
+    "category": "Engineering",
+    "prerequisites": [
+      "colony_life_support"
+    ],
+    "research_cost": 25.0,
+    "unlock_payload": {
+      "milestones": [
+        "colony_habitat_expansion"
+      ],
+      "build_options": [
+        "hydroponics_bay",
+        "regolith_extractor"
+      ]
+    },
+    "kardashev_tier": 1,
+    "description": "Modular habitat expansions and in-situ resource extraction. Enables self-sustaining off-world colonies."
+  },
+  {
+    "id": "transport_capacity_upgrade",
+    "display_name": "Transport Capacity Upgrade",
+    "category": "Engineering",
+    "prerequisites": [
+      "nuclear_thermal_drive"
+    ],
+    "research_cost": 20.0,
+    "unlock_payload": {
+      "milestones": [
+        "transport_capacity_upgrade"
+      ],
+      "build_options": [],
+      "stat_modifiers": {
+        "transport_capacity_mult": 2.0
+      }
+    },
+    "kardashev_tier": 1,
+    "description": "Larger cargo bays and optimised packing algorithms double effective freighter capacity."
+  },
+  {
+    "id": "transport_speed_upgrade",
+    "display_name": "High-Efficiency Transport",
+    "category": "Engineering",
+    "prerequisites": [
+      "ion_drive"
+    ],
+    "research_cost": 30.0,
+    "unlock_payload": {
+      "milestones": [
+        "transport_speed_upgrade"
+      ],
+      "build_options": [],
+      "stat_modifiers": {}
+    },
+    "kardashev_tier": 1,
+    "description": "Ion-optimised transfer orbits reduce average freight transit times by 40%."
+  },
+  {
+    "id": "planetary_engineering",
+    "display_name": "Planetary Engineering",
+    "category": "Environment",
+    "prerequisites": [
+      "colony_habitat_expansion",
+      "fusion_drive"
+    ],
+    "required_milestones": [
+      "colony_life_support"
+    ],
+    "research_cost": 80.0,
+    "unlock_payload": {
+      "milestones": [
+        "planetary_engineering"
+      ],
+      "build_options": [
+        "terraforming_array"
+      ]
+    },
+    "kardashev_tier": 1,
+    "description": "Atmospheric processors and albedo management on a planetary scale. Unlocks the Terraforming Array."
+  },
+  {
+    "id": "advanced_cargo_systems",
+    "display_name": "Advanced Cargo Systems",
+    "category": "Engineering",
+    "prerequisites": [
+      "transport_capacity_upgrade",
+      "colony_life_support"
+    ],
+    "research_cost": 40.0,
+    "unlock_payload": {
+      "milestones": [
+        "advanced_cargo_systems"
+      ],
+      "build_options": [],
+      "stat_modifiers": {
+        "transport_capacity_mult": 4.0
+      }
+    },
+    "kardashev_tier": 1,
+    "description": "Magnetic containment and micro-g loading bays quadruple effective freighter throughput."
+  },
+  {
+    "id": "multi_hop_routing",
+    "display_name": "Multi-Hop Routing",
+    "category": "Engineering",
+    "prerequisites": [
+      "advanced_cargo_systems",
+      "ion_drive"
+    ],
+    "research_cost": 50.0,
+    "unlock_payload": {
+      "milestones": [
+        "multi_hop_routing"
+      ],
+      "build_options": []
+    },
+    "kardashev_tier": 1,
+    "description": "Automated relay depots and dynamic route-planning algorithms. Enables supply chains across three or more colonies."
   }
 ]

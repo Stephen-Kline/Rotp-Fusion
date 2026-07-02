@@ -14,10 +14,14 @@ func tick(s: SimulationState, _delta_years: float, result: TickResult) -> void:
 		match ship.ship_state:
 			Ship.ShipState.BUILDING:
 				if s.elapsed_days >= ship.build_complete_day:
-					ship.ship_state = Ship.ShipState.AWAITING_WINDOW
+					# Transport ships enter duty rotation immediately — no launch order needed.
+					if ship.role == Ship.Role.TRANSPORT_CARGO:
+						ship.ship_state = Ship.ShipState.ORBITING
+					else:
+						ship.ship_state = Ship.ShipState.AWAITING_WINDOW
 					result.add_event(
 						"ship_built_%s" % ship.id,
-						"%s is ready for launch." % ship.label,
+						"%s is ready." % ship.label,
 						EventSystem.Priority.MEDIUM, "ships",
 						{"ship_id": ship.id}
 					)
@@ -69,6 +73,12 @@ func _handle_arrival(s: SimulationState, ship: Ship,
 
 func _on_ship_arrived(s: SimulationState, ship: Ship, result: TickResult) -> void:
 	var dest := ship.destination_body
+
+	# Colonizer ships found a new colony on arrival (consumed after founding).
+	if ship.role == Ship.Role.COLONIZER:
+		_found_colony(s, ship, result)
+		return
+
 	match dest:
 		"Moon":
 			match ship.role:
@@ -97,6 +107,33 @@ func _on_ship_arrived(s: SimulationState, ship: Ship, result: TickResult) -> voi
 				EventSystem.Priority.MEDIUM, "ships",
 				{"ship_id": ship.id, "body": dest}
 			)
+
+
+func _found_colony(s: SimulationState, ship: Ship, result: TickResult) -> void:
+	var body := ship.destination_body
+	if body.is_empty() or s.colony_for(body) != null:
+		return
+	if "colony_life_support" not in s.completed_research:
+		return
+	var db := BodyDB.new()
+	var col         := ColonyState.new()
+	col.body_id          = body
+	col.population_units = float(ship.payload.get("colonists", 0.1))
+	col.environment      = ColonySystem.ENV_START_BY_BODY.get(body, 15.0)
+	col.env_yield_mult   = 1.0
+	col.resource_bonus   = db.resource_bonus(body)
+	col.structures.append("colony_habitat")
+	col.online_flags.append(true)
+	s.colonies.append(col)
+	# Consume the colonizer ship (one-shot)
+	ship.ship_state = Ship.ShipState.ARRIVED
+	s.milestone_flags["colony_%s" % body.to_lower()] = true
+	result.add_event(
+		"colony_founded_%s" % body.to_lower(),
+		"Colony founded on %s. A permanent settlement takes root." % body,
+		EventSystem.Priority.CRITICAL, "MILESTONE",
+		{"body": body}
+	)
 
 
 # ── Build ─────────────────────────────────────────────────────────────────────
@@ -130,6 +167,7 @@ func _do_build_ship(s: SimulationState, p: Dictionary) -> void:
 	ship.ship_state      = Ship.ShipState.BUILDING
 	ship.build_start_day    = s.elapsed_days
 	ship.build_complete_day = s.elapsed_days + build_days / maxf(s.construction_speed, 0.001)
+	ship.payload            = _ship_db.get_default_payload(build_option)
 	s.ships.append(ship)
 
 

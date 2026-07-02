@@ -35,5 +35,15 @@
     "build_days": 730.0,
     "capacity": 1e12,
     "description": "A bulk cargo vessel for moving resources between colonies. Capacity upgradeable via tech."
+  },
+  {
+    "id": "colonizer",
+    "display_name": "Colony Ship",
+    "role": "colonizer",
+    "materials": 2e10,
+    "energy": 2e20,
+    "build_days": 1825.0,
+    "payload": { "colonists": 0.1 },
+    "description": "A crewed vessel carrying colonists, prefab modules, and supplies to found a permanent settlement."
   }
 ]

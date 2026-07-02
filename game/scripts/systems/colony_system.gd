@@ -171,7 +171,31 @@ func _apply_build(s: SimulationState, p: Dictionary) -> bool:
 	col.online_flags.append(true)
 	if not _struct_db.is_repeatable(struct_type):
 		s.available_build_options.erase(struct_type)
+	# Post-build triggers
+	match struct_type:
+		"expanded_station":
+			_found_station(s)
+		"docking_bay":
+			if "transport_freighter" not in s.available_build_options:
+				s.available_build_options.append("transport_freighter")
 	return true
+
+
+func _found_station(s: SimulationState) -> void:
+	if s.colony_for("Station") != null:
+		return
+	var col := ColonyState.new()
+	col.body_id          = "Station"
+	col.population_units = 0.05
+	col.environment      = 100.0
+	col.env_yield_mult   = 1.0
+	col.resource_bonus   = {}
+	col.structures.append("life_support_module")
+	col.online_flags.append(true)
+	s.colonies.append(col)
+	for sid: String in ["microgravity_lab", "docking_bay"]:
+		if sid not in s.available_build_options:
+			s.available_build_options.append(sid)
 
 
 func _apply_demolish(s: SimulationState, p: Dictionary) -> bool:

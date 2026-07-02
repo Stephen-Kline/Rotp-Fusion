@@ -104,3 +104,5 @@ func _apply_unlock_payload(s: SimulationState, node: TechNode) -> void:
 		s.mult_knowledge *= float(modifiers["mult_knowledge"])
 	if modifiers.has("mult_materials"):
 		s.mult_materials *= float(modifiers["mult_materials"])
+	if modifiers.has("transport_capacity_mult"):
+		s.transport_capacity_mult = float(modifiers["transport_capacity_mult"])

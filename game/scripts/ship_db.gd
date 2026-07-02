@@ -42,11 +42,16 @@ func get_role(id: String) -> int:
 		"transport_human":   return Ship.Role.TRANSPORT_HUMAN
 		"transport_cargo":   return Ship.Role.TRANSPORT_CARGO
 		"military":          return Ship.Role.MILITARY
+		"colonizer":         return Ship.Role.COLONIZER
 		_:                   return Ship.Role.PROBE
 
 
 func get_capacity(id: String) -> float:
 	return float(_entries.get(id, {}).get("capacity", 0.0))
+
+
+func get_default_payload(id: String) -> Dictionary:
+	return _entries.get(id, {}).get("payload", {}) as Dictionary
 
 
 func get_description(id: String) -> String:

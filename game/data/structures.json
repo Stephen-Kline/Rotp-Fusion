@@ -92,5 +92,64 @@
     "energy_op": 1e18,
     "struct_bonuses": { "energy": 2e19 },
     "description": "Grid of wind turbines providing low-overhead renewable energy."
+  },
+  {
+    "id": "colony_habitat",
+    "display_name": "Colony Habitat",
+    "materials": 3e10,
+    "energy": 1e20,
+    "struct_bonuses": { "consumables": -5e11, "knowledge": 2e8 },
+    "description": "Pressurised habitat modules and ECLSS for an off-world settlement. Consumes consumables; yields light research."
+  },
+  {
+    "id": "hydroponics_bay",
+    "display_name": "Hydroponics Bay",
+    "repeatable": true,
+    "materials": 5e9,
+    "energy": 5e19,
+    "struct_bonuses": { "consumables": 3e11 },
+    "description": "Closed-loop hydroponic food production. Partially offsets colony life-support consumable drain."
+  },
+  {
+    "id": "regolith_extractor",
+    "display_name": "Regolith Extractor",
+    "repeatable": true,
+    "materials": 8e9,
+    "energy": 8e19,
+    "struct_bonuses": { "materials": 2e9 },
+    "description": "Heavy machinery for in-situ resource extraction from planetary regolith."
+  },
+  {
+    "id": "microgravity_lab",
+    "display_name": "Microgravity Lab",
+    "materials": 1e10,
+    "energy": 5e19,
+    "struct_bonuses": { "knowledge": 1e9 },
+    "description": "Orbital research module exploiting microgravity for advanced materials and biology experiments."
+  },
+  {
+    "id": "life_support_module",
+    "display_name": "Life Support Module",
+    "materials": 5e9,
+    "energy": 2e19,
+    "struct_bonuses": { "consumables": -2e12 },
+    "description": "Closed-loop life support for station crew. Consumes consumables from the supply chain."
+  },
+  {
+    "id": "docking_bay",
+    "display_name": "Docking Bay",
+    "materials": 2e10,
+    "energy": 1e20,
+    "struct_bonuses": {},
+    "description": "Multi-port docking complex enabling cargo freighter operations. Unlocks transport ship construction."
+  },
+  {
+    "id": "terraforming_array",
+    "display_name": "Terraforming Array",
+    "materials": 5e11,
+    "energy": 5e21,
+    "env_delta": 20.0,
+    "struct_bonuses": {},
+    "description": "Planetary-scale atmospheric processors and albedo reflectors. Massive energy draw; accelerates environment recovery by 20 pts/yr."
   }
 ]

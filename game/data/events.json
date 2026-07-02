@@ -1,0 +1,136 @@
+[
+  {
+    "id": "asteroid_warning",
+    "display_name": "Asteroid Warning",
+    "base_probability": 0.04,
+    "detection_window_days": 21,
+    "conditions": { "min_elapsed_days": 365 },
+    "choices": [
+      {
+        "id": "deflect",
+        "label": "Deflect",
+        "description": "Launch a kinetic impactor. Costly but preserves all structures.",
+        "cost": { "energy": 5e20, "materials": 1e10 },
+        "consequence": {}
+      },
+      {
+        "id": "evacuate",
+        "label": "Evacuate",
+        "description": "Emergency evacuation. Saves population but loses some infrastructure.",
+        "cost": {},
+        "consequence": { "structures_lost": 1, "env_delta": -5.0 }
+      },
+      {
+        "id": "accept",
+        "label": "Accept Impact",
+        "description": "Do nothing. Catastrophic but rare.",
+        "cost": {},
+        "consequence": { "structures_lost": 3, "env_delta": -20.0, "consumables_loss": 2e14 }
+      }
+    ],
+    "default_consequence": { "structures_lost": 3, "env_delta": -20.0, "consumables_loss": 2e14 }
+  },
+  {
+    "id": "supply_disruption",
+    "display_name": "Supply Disruption",
+    "base_probability": 0.10,
+    "detection_window_days": 7,
+    "conditions": { "min_colonies": 2 },
+    "choices": [
+      {
+        "id": "ration",
+        "label": "Emergency Rationing",
+        "description": "Reduce consumption. Population morale drops temporarily.",
+        "cost": {},
+        "consequence": { "faction_satisfaction": -10.0 }
+      },
+      {
+        "id": "reroute",
+        "label": "Reroute Supply",
+        "description": "Divert from surplus colony. Costs materials for logistics.",
+        "cost": { "materials": 5e9 },
+        "consequence": {}
+      },
+      {
+        "id": "burn_stockpile",
+        "label": "Burn Stockpile",
+        "description": "Consume emergency reserves. Immediate but reduces buffer.",
+        "cost": {},
+        "consequence": { "consumables_loss": 1e13 }
+      }
+    ],
+    "default_consequence": { "consumables_loss": 1e13, "faction_satisfaction": -5.0 }
+  },
+  {
+    "id": "faction_crisis",
+    "display_name": "Faction Crisis",
+    "base_probability": 0.08,
+    "detection_window_days": 14,
+    "conditions": { "min_elapsed_days": 730, "max_faction_satisfaction": 40.0 },
+    "choices": [
+      {
+        "id": "spend_capital",
+        "label": "Spend Political Capital",
+        "description": "Expensive concessions stabilize the faction.",
+        "cost": { "political_capital": 20.0 },
+        "consequence": { "faction_satisfaction": 15.0 }
+      },
+      {
+        "id": "reallocate",
+        "label": "Emergency Reallocation",
+        "description": "Shift resources to address grievances. One pillar takes a hit.",
+        "cost": {},
+        "consequence": { "faction_satisfaction": 8.0, "env_delta": -3.0 }
+      },
+      {
+        "id": "accept_penalty",
+        "label": "Accept Penalty",
+        "description": "Let the crisis play out. Lasting satisfaction penalty.",
+        "cost": {},
+        "consequence": { "faction_satisfaction": -15.0 }
+      }
+    ],
+    "default_consequence": { "faction_satisfaction": -20.0 }
+  },
+  {
+    "id": "piracy",
+    "display_name": "Piracy on Transport Routes",
+    "base_probability": 0.06,
+    "detection_window_days": 10,
+    "conditions": { "min_colonies": 2, "min_elapsed_days": 1460 },
+    "choices": [
+      {
+        "id": "escort",
+        "label": "Deploy Escort Ships",
+        "description": "Military escort protects freighters. Costs energy.",
+        "cost": { "energy": 2e20 },
+        "consequence": {}
+      },
+      {
+        "id": "pay_off",
+        "label": "Pay Off Pirates",
+        "description": "Expensive but immediate resolution.",
+        "cost": { "materials": 2e10 },
+        "consequence": {}
+      },
+      {
+        "id": "reroute",
+        "label": "Reroute",
+        "description": "Take longer path. Transport capacity halved for 30 days.",
+        "cost": {},
+        "consequence": { "consumables_loss": 5e12 }
+      }
+    ],
+    "default_consequence": { "consumables_loss": 1e13, "materials_loss": 5e9 }
+  },
+  {
+    "id": "alien_attack",
+    "display_name": "Alien Attack",
+    "base_probability": 1e-6,
+    "detection_window_days": 0,
+    "probability_scales_with_kardashev": true,
+    "conditions": {},
+    "choices": [],
+    "default_consequence": { "structures_lost": 5, "env_delta": -30.0, "consumables_loss": 5e14 }
+  }
+]

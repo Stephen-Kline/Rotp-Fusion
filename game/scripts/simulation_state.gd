@@ -78,6 +78,12 @@ var milestone_gsa_founded: bool:
 @export var ships: Array[Ship] = []
 @export var orbital_units: Array[OrbitalUnit] = []
 
+# Active events (Array of Dictionary: event_id, triggered_day, expiry_day, choice_made)
+@export var active_events: Array = []
+
+# Transport multiplier — base 1.0, doubled by transport_capacity_upgrade tech
+@export var transport_capacity_mult: float = 1.0
+
 # ── Aggregate read-only getters (sum across all colonies) ─────────────────────
 # EconomySystem writes to col.* fields directly; these aggregate for UI display.
 # ShipSystem and ColonySystem MUST use col.* for deductions (no write path here).

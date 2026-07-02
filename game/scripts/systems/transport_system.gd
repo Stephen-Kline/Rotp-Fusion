@@ -13,7 +13,7 @@ func tick(s: SimulationState, delta_years: float, _result: TickResult) -> void:
 	if s.colonies.size() < 2:
 		return  # nothing to transport yet
 
-	var total_capacity := _fleet_capacity(s) * delta_years
+	var total_capacity := _fleet_capacity(s) * s.transport_capacity_mult * delta_years
 	if total_capacity <= 0.0:
 		return
 

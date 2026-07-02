@@ -9,6 +9,7 @@ enum Role {
 	TRANSPORT_CARGO,
 	MILITARY,
 	MISSION_SPECIFIC,
+	COLONIZER,
 }
 
 enum ShipState {
@@ -99,4 +100,4 @@ func orbit_radius_km(body_radius_km: float) -> float:
 
 # Whether this role should enter ARRIVED (terminal) rather than ORBITING on arrival.
 func is_terminal_on_arrival() -> bool:
-	return role == Role.MISSION_SPECIFIC
+	return role == Role.MISSION_SPECIFIC or role == Role.COLONIZER

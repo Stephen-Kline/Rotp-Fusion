@@ -12,6 +12,7 @@ enum Type {
 	DEMOLISH_STRUCTURE,   # permanently remove a structure at a body (no refund)
 	BUILD_SHIP,           # begin ship construction at a launch facility
 	LAUNCH_SHIP,          # authorize departure of a built or orbiting ship
+	RESOLVE_EVENT,        # player selects a choice for an active event
 }
 
 var type: int
@@ -68,3 +69,8 @@ static func launch_ship(ship_id: String, destination: String = "",
 		use_direct: bool = false) -> PlayerAction:
 	return PlayerAction.new(Type.LAUNCH_SHIP,
 		{"ship_id": ship_id, "destination": destination, "use_direct": use_direct})
+
+
+static func resolve_event(event_id: String, choice_id: String) -> PlayerAction:
+	return PlayerAction.new(Type.RESOLVE_EVENT,
+		{"event_id": event_id, "choice_id": choice_id})

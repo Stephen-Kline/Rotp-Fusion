@@ -10,6 +10,7 @@ var _ships     := ShipSystem.new()
 var _colony    := ColonySystem.new()
 var _factions  := FactionSystem.new()
 var _transport := TransportSystem.new()
+var _events    := NarrativeSystem.new()
 
 
 func apply_actions(state: SimulationState, actions: Array) -> SimulationState:
@@ -21,6 +22,7 @@ func apply_actions(state: SimulationState, actions: Array) -> SimulationState:
 		if _research.apply(next, action): continue
 		if _ships.apply(next, action):    continue
 		if _colony.apply(next, action):   continue
+		if _events.apply(next, action):   continue
 		_factions.apply(next, action)
 	return next
 
@@ -36,4 +38,5 @@ func tick(state: SimulationState, delta_days: float) -> TickResult:
 	_ships.tick(next, delta_years, result)
 	_colony.tick(next, delta_years, result)
 	_transport.tick(next, delta_years, result)  # runs after stockpiles are updated
+	_events.tick(next, delta_years, result)     # runs last — reads post-tick state
 	return result
